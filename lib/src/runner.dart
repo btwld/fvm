@@ -294,7 +294,9 @@ class FvmCommandRunner extends CompletionCommandRunner<int> {
 
     // Run the command or show version
     final int? exitCode;
-    if (topLevelResults['version'] == true) {
+    // An unknown command (e.g. `fvm fluter --version`) lands in `rest`; let
+    // the base runner report it instead of printing the version.
+    if (topLevelResults['version'] == true && topLevelResults.rest.isEmpty) {
       logger.info(packageVersion);
       exitCode = ExitCode.success.code;
     } else {

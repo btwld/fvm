@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fvm/src/models/config_model.dart';
 import 'package:fvm/src/models/project_model.dart';
+import 'package:fvm/src/services/logger_service.dart';
 import 'package:fvm/src/services/project_service.dart';
 import 'package:fvm/src/utils/convert_posix_path.dart';
 import 'package:fvm/src/workflows/update_vscode_settings.workflow.dart';
@@ -133,6 +134,31 @@ void main() {
         // Verify settings.json was not created
         final settingsFile = File(p.join(vscodeDir.path, 'settings.json'));
         expect(settingsFile.existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'should not warn when config explicitly disables VS Code settings',
+      () async {
+        final testDir = tempDirs.create();
+        createPubspecYaml(testDir);
+        createProjectConfig(
+          ProjectConfig(flutter: '3.10.0', updateVscodeSettings: false),
+          testDir,
+        );
+        Directory(p.join(testDir.path, '.vscode')).createSync();
+
+        final project = runner.context.get<ProjectService>().findAncestor(
+              directory: testDir,
+            );
+        await UpdateVsCodeSettingsWorkflow(runner.context)(project);
+
+        expect(
+          runner.context.get<Logger>().outputs.any(
+                (message) => message.contains('not managing'),
+              ),
+          isFalse,
+        );
       },
     );
 

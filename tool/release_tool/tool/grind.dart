@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cli_pkg/cli_pkg.dart' as pkg;
+import 'package:fvm_release_tool/src/chocolatey_package.dart';
 import 'package:grinder/grinder.dart';
 import 'package:path/path.dart' as p;
 import 'package:meta/meta.dart';
@@ -23,6 +24,7 @@ const _packageName = 'fvm';
 const _owner = 'btwld';
 
 const _repo = 'fvm';
+const _chocolateyPushUrl = 'https://push.chocolatey.org/';
 
 final Directory _releaseToolRoot = Directory.current;
 final Directory _repoRoot = Directory(
@@ -61,6 +63,67 @@ void main(List<String> args) {
 
   pkg.addAllTasks();
   grind(args);
+}
+
+@Task('Stage a self-contained Chocolatey package directory')
+void fvmChocolateyPackage() {
+  final files = stageChocolateyPackage(
+    repoRoot: _effectiveRepoRoot,
+    version: pkg.version.toString(),
+  );
+  log('Staged Chocolatey package at ${files.nuspec.parent.path}.');
+}
+
+@Task('Build the self-contained Chocolatey nupkg')
+@Depends(fvmChocolateyPackage)
+Future<void> fvmChocolateyPack() async {
+  final buildDirectory = Directory(p.join(_effectiveRepoRoot.path, 'build'));
+  final nuspec = File(p.join(buildDirectory.path, 'chocolatey', 'fvm.nuspec'));
+
+  await runAsync(
+    'choco',
+    arguments: [
+      'pack',
+      nuspec.path,
+      '--version=${pkg.version}',
+      '--output-directory=${buildDirectory.path}',
+      '--yes',
+    ],
+    quiet: false,
+  );
+}
+
+@Task('Deploy the self-contained Chocolatey package')
+@Depends(fvmChocolateyPack)
+Future<void> fvmChocolateyDeploy() async {
+  final token = Platform.environment['CHOCOLATEY_TOKEN'];
+  if (token == null || token.isEmpty) {
+    _fail('CHOCOLATEY_TOKEN must be set to deploy to Chocolatey.');
+  }
+
+  final nupkg = File(
+    p.join(_effectiveRepoRoot.path, 'build', 'fvm.${pkg.version}.nupkg'),
+  );
+  if (!nupkg.existsSync()) {
+    _fail('Chocolatey package not found: ${nupkg.path}');
+  }
+
+  log('Pushing ${nupkg.path} to $_chocolateyPushUrl.');
+  // Use Process.start, not runAsync: runAsync logs the full command line,
+  // which would print the API key in the release log.
+  final process = await Process.start('choco', [
+    'push',
+    nupkg.path,
+    '--source',
+    _chocolateyPushUrl,
+    '--api-key',
+    token,
+  ]);
+  LineSplitter().bind(utf8.decoder.bind(process.stdout)).listen(log);
+  LineSplitter().bind(utf8.decoder.bind(process.stderr)).listen(log);
+  if (await process.exitCode != 0) {
+    _fail('choco push failed.');
+  }
 }
 
 @Task('Get all releases')

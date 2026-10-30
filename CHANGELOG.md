@@ -1,3 +1,7 @@
+## 4.3.3
+
+* fix: publish the Chocolatey package with the prebuilt `fvm.exe` from the Windows release instead of compiling it on install, removing the exact `dart-sdk` dependency that blocked Dart SDK upgrades through Chocolatey (#1058, #1079)
+
 ## 4.3.2
 
 * fix: preserve live command input/output, exit status, and Ctrl+C cleanup when falling back to the system PATH without a project or global SDK selection (#1080)

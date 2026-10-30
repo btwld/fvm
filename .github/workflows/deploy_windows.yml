@@ -33,4 +33,4 @@ jobs:
 
       - name: Deploy Chocolatey (Windows)
         working-directory: tool/release_tool
-        run: dart run grinder pkg-chocolatey-deploy
+        run: dart run grinder fvm-chocolatey-deploy

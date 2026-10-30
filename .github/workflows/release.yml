@@ -84,7 +84,7 @@ jobs:
 
           - name: Deploy Chocolatey
             working-directory: tool/release_tool
-            run: dart run grinder pkg-chocolatey-deploy
+            run: dart run grinder fvm-chocolatey-deploy
 
   deploy-macos:
       name: Deploy macOS

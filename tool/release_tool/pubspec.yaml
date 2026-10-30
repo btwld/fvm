@@ -7,7 +7,9 @@ environment:
   sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
+  archive: ^3.6.1
   cli_pkg: 2.14.0
+  crypto: ^3.0.6
   grinder: ^0.9.5
   path: ^1.9.0
   meta: ^1.10.0

@@ -52,6 +52,71 @@ concurrency:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
+  # Chocolatey package - build, install, and uninstall the self-contained nupkg
+  # ─────────────────────────────────────────────────────────────────────────────
+  chocolatey-package:
+    name: Chocolatey package
+    timeout-minutes: 30
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart (release tool)
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.RELEASE_DART_SDK }}
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Install release tool dependencies
+        working-directory: tool/release_tool
+        run: dart pub get
+
+      - name: Build Windows x64 release archive
+        working-directory: tool/release_tool
+        run: dart run grinder pkg-standalone-windows-x64
+
+      - name: Build Chocolatey package
+        working-directory: tool/release_tool
+        run: dart run grinder fvm-chocolatey-pack
+
+      - name: Verify Chocolatey install, shim, and uninstall
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:'
+          $version = ($versionLine.Line -split ':', 2)[1].Trim()
+
+          try {
+            choco install fvm --version $version --source "${{ github.workspace }}\build" --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "choco install failed" }
+
+            $actualVersion = (fvm --version).Trim()
+            if ($actualVersion -ne $version) {
+              throw "Expected FVM $version, got $actualVersion"
+            }
+
+            $packageDir = Join-Path $env:ChocolateyInstall 'lib\fvm'
+            if (Select-String -Path (Join-Path $packageDir 'fvm.nuspec') -Pattern 'dart-sdk' -Quiet) {
+              throw 'Chocolatey package unexpectedly depends on dart-sdk'
+            }
+            foreach ($file in 'tools\LICENSE.txt', 'tools\VERIFICATION.txt') {
+              if (-not (Test-Path (Join-Path $packageDir $file))) {
+                throw "Chocolatey package is missing $file"
+              }
+            }
+          } finally {
+            choco uninstall fvm --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "choco uninstall failed" }
+          }
+
+          if (Get-Command fvm -ErrorAction SilentlyContinue) {
+            throw 'Chocolatey did not remove the fvm command shim'
+          }
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # Unit Tests - Run first for fast feedback
   # ─────────────────────────────────────────────────────────────────────────────
   test:

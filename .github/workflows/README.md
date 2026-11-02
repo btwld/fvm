@@ -161,3 +161,14 @@ For hotfixes or platform-specific urgent updates, use individual platform workfl
 - Verify runner OS matches deployment target
 - Review build logs for specific error details
 
+
+
+### Integration scope
+
+`Test CLI` keeps root, MCP and release-tool unit tests on every triggered run.
+Only PRs changing exclusively `fvm_mcp/`, `tool/release_tool/` and optional
+root Markdown skip the SDK-download integration and v3 migration jobs. This
+uses the verified PR merge diff rather than a branch-name exception. Any CLI,
+dependency, shared fixture, tooling, workflow or unknown path runs both heavy
+suites. Main/develop pushes, manual and reusable workflow calls always run
+them; missing or uncertain Git history also requests the full suites.

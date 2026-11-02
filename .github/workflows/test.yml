@@ -51,10 +51,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Select integration scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      integration: ${{ steps.scope.outputs.integration }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Test integration scope
+        run: python3 -m unittest discover -s .github/scripts -p 'test_ci_scope.py'
+      - id: scope
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 .github/scripts/ci_scope.py
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Unit Tests - Run first for fast feedback
   # ─────────────────────────────────────────────────────────────────────────────
   test:
+    needs: changes
+    if: ${{ !cancelled() }}
     name: Test
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -62,6 +82,13 @@ jobs:
       DCM_CI_KEY: ${{ secrets.DCM_CI_KEY }}
       DCM_EMAIL: ${{ secrets.DCM_EMAIL }}
     steps:
+      - name: Require valid integration scope
+        env:
+          SCOPE_RESULT: ${{ needs.changes.result }}
+          INTEGRATION: ${{ needs.changes.outputs.integration }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$INTEGRATION" in true|false) ;; *) exit 1 ;; esac
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -182,10 +209,9 @@ jobs:
   integration-test:
     name: Integration Tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: test
+    needs: [test, changes]
     timeout-minutes: 45
-    # Skip heavy integration tests for the fvm-mcp PR branch (MCP-only changes).
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.ref != 'fvm-mcp'
+    if: needs.changes.outputs.integration == 'true'
 
     strategy:
       fail-fast: true
@@ -214,6 +240,8 @@ jobs:
         run: dart run grinder integration-test
 
   migration-test:
+    needs: changes
+    if: needs.changes.outputs.integration == 'true'
     name: Migration Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -244,4 +272,5 @@ jobs:
         env:
           RUN_MIGRATION_IT: "true"
         run: dart test test/integration/migration_from_v3_test.dart
+
 

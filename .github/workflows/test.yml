@@ -67,6 +67,9 @@ jobs:
       - id: scope
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          # Reusable workflows inherit the caller's event_name. Their declared
+          # SDK input (including its default) identifies a reusable invocation.
+          REUSABLE_CALL: ${{ inputs.sdk-version != '' }}
         run: python3 .github/scripts/ci_scope.py
 
   # ─────────────────────────────────────────────────────────────────────────────

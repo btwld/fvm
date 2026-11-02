@@ -19,9 +19,9 @@ def needs_integration(paths):
     return False
 
 
-def scope(event, base, cwd=None):
+def scope(event, base, cwd=None, reusable=False):
     # Main pushes, reusable release callers and dispatches retain all suites.
-    if event != 'pull_request' or not re.fullmatch(r'[0-9a-f]{40}', base):
+    if reusable or event != 'pull_request' or not re.fullmatch(r'[0-9a-f]{40}', base):
         return True
     try:
         parents = subprocess.check_output(
@@ -38,7 +38,8 @@ def scope(event, base, cwd=None):
 
 if __name__ == '__main__':
     heavy = scope(os.environ.get('GITHUB_EVENT_NAME', ''),
-                  os.environ.get('PR_BASE_SHA', ''))
+                  os.environ.get('PR_BASE_SHA', ''),
+                  reusable=os.environ.get('REUSABLE_CALL') == 'true')
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write(f'integration={str(heavy).lower()}\n')
     print('Run integration and migration' if heavy else 'Isolated tools PR: unit suites only')

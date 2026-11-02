@@ -24,6 +24,8 @@ class ScopeTests(unittest.TestCase):
         for event in ['push', 'workflow_call', 'workflow_dispatch', 'schedule', '']:
             self.assertTrue(scope(event, 'a' * 40))
         self.assertTrue(scope('pull_request', ''))
+        # workflow_call inherits a pull_request caller's event and base SHA.
+        self.assertTrue(scope('pull_request', 'a' * 40, reusable=True))
         with patch('ci_scope.subprocess.check_output', side_effect=OSError):
             self.assertTrue(scope('pull_request', 'a' * 40))
 

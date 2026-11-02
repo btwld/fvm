@@ -2,6 +2,7 @@ name: Test Install Script
 
 on:
   push:
+    branches: [main, develop]
     paths:
       - 'docs/public/install.sh'
       - 'docs/public/uninstall.sh'
@@ -17,9 +18,14 @@ on:
       - '.github/workflows/test-install.yml'
   workflow_dispatch:
 
+concurrency:
+  group: installer-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Basic validation - shellcheck
   validate:
+    timeout-minutes: 10
     name: Validate Scripts
     runs-on: ubuntu-latest
     steps:
@@ -44,6 +50,7 @@ jobs:
 
   # Test install.sh (v2 - user-local only)
   test-install:
+    timeout-minutes: 30
     name: Test install.sh - ${{ matrix.os }}
     needs: validate
     strategy:
@@ -125,6 +132,7 @@ jobs:
 
   # Test v1 to v2 migration
   test-migration:
+    timeout-minutes: 30
     name: Test v1 to v2 Migration
     needs: validate
     runs-on: ubuntu-latest
@@ -202,6 +210,7 @@ jobs:
 
   # Test install.sh in container (root allowed with warning)
   test-container:
+    timeout-minutes: 30
     name: Test install.sh in Container
     needs: validate
     runs-on: ubuntu-latest
@@ -231,6 +240,7 @@ jobs:
 
   # Test install.sh root permissions (warns but allows)
   test-permissions:
+    timeout-minutes: 15
     name: Test install.sh Root Warning
     needs: validate
     runs-on: ubuntu-latest

@@ -7,6 +7,15 @@ macOS and Windows tests, deployments, Homebrew updates, and ARM64 smoke jobs
 are paused. FVM MCP releases build Linux archives only. Restore the platform
 jobs before promising new macOS or Windows release assets.
 
+## Flutter release feeds
+
+`data.yaml` refreshes the macOS, Windows, and Linux JSON release feeds hourly
+at minute 17, or on manual dispatch. It validates all three responses before
+changing files and commits changed feeds together. Semantically unchanged JSON
+does not create a commit. The Python fetcher and its offline failure/no-change
+tests live under `.github/scripts/`; Deno and the retired Flat action are no
+longer required.
+
 ## Active Workflows
 
 ### `release.yml`

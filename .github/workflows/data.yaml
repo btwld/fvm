@@ -1,36 +1,35 @@
 name: Fetch Data
 on:
   schedule:
-    - cron: 0 * * * *
+    - cron: '17 * * * *'
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+concurrency:
+  group: flutter-release-feeds
+  cancel-in-progress: false
+
 jobs:
   scheduled:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Setup deno
-        uses: denoland/setup-deno@main
-        with:
-          deno-version: v1.x
-
       - name: Check out repo
         uses: actions/checkout@v4
-
-      - name: Fetch data
-        uses: githubocto/flat@v3
-        with:
-          http_url: https://storage.googleapis.com/flutter_infra_release/releases/releases_macos.json
-          downloaded_filename: releases_macos.json
-      - name: Fetch data
-        uses: githubocto/flat@v3
-        with:
-          http_url: https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json
-          downloaded_filename: releases_windows.json
-      - name: Fetch data
-        uses: githubocto/flat@v3
-        with:
-          http_url: https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
-          downloaded_filename: releases_linux.json
+      - name: Test feed refresh
+        run: python3 -m unittest discover -s .github/scripts -p 'test_update_release_feeds.py'
+      - name: Fetch and validate all release feeds
+        run: python3 .github/scripts/update_release_feeds.py
+      - name: Commit changed feeds together
+        run: |
+          git add -- releases_macos.json releases_windows.json releases_linux.json
+          if git diff --cached --quiet; then
+            echo "Release feeds are unchanged."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "chore: refresh Flutter release feeds"
+          git push

@@ -5,6 +5,8 @@ on:
 
 jobs:
   deploy-homebrew:
+    # Paused to limit GitHub Actions usage.
+    if: ${{ false }}
     name: Update Homebrew
     runs-on: macos-latest
     env:
@@ -31,3 +33,4 @@ jobs:
       - name: Deploy homebrew
         working-directory: tool/release_tool
         run: dart run grinder pkg-homebrew-update
+

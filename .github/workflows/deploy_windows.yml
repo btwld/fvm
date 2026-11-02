@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   deploy-windows:
+    # Paused to limit GitHub Actions usage.
+    if: ${{ false }}
     name: Deploy (Windows)
     runs-on: windows-latest
     env:
@@ -34,3 +36,4 @@ jobs:
       - name: Deploy Chocolatey (Windows)
         working-directory: tool/release_tool
         run: dart run grinder pkg-chocolatey-deploy
+

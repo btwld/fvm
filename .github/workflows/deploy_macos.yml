@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   deploy-macos:
+    # Paused to limit GitHub Actions usage.
+    if: ${{ false }}
     name: Deploy (Macos)
     runs-on: macos-latest
     env:
@@ -31,3 +33,4 @@ jobs:
       - name: Deploy Github Mac
         working-directory: tool/release_tool
         run: dart run grinder pkg-github-macos
+

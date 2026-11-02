@@ -115,14 +115,6 @@ jobs:
             target: linux-x64
             binary_name: fvm_mcp
             archive_ext: tar.gz
-          - os: macos-latest
-            target: macos
-            binary_name: fvm_mcp
-            archive_ext: tar.gz
-          - os: windows-latest
-            target: windows-x64
-            binary_name: fvm_mcp.exe
-            archive_ext: zip
 
     steps:
       - name: Checkout
@@ -221,3 +213,4 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             dist/*
+

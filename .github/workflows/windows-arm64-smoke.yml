@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   latest-release-arm64:
+    # Paused to limit GitHub Actions usage.
+    if: ${{ false }}
     name: Latest release archive
     runs-on: windows-11-arm
 
@@ -72,3 +74,4 @@ jobs:
         run: |
           $env:PATH = "$(Join-Path $PWD 'fvm');$env:PATH"
           fvm --version
+

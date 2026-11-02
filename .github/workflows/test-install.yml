@@ -48,7 +48,7 @@ jobs:
     needs: validate
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -253,3 +253,4 @@ jobs:
           # Should succeed
           sudo -H /root/fvm/bin/fvm --version
           echo "✅ Root install successful"
+

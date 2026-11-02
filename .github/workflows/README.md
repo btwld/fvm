@@ -1,5 +1,12 @@
 # FVM GitHub Workflows
 
+## Hosted runner policy
+
+GitHub Actions currently uses Linux runners only to limit compute usage.
+macOS and Windows tests, deployments, Homebrew updates, and ARM64 smoke jobs
+are paused. FVM MCP releases build Linux archives only. Restore the platform
+jobs before promising new macOS or Windows release assets.
+
 ## Active Workflows
 
 ### `release.yml`
@@ -11,7 +18,7 @@
    - 📦 pub.dev
    - 🐧 GitHub Linux binaries
    - Uses cli_pkg's `pkg-github-release` to create GitHub release from CHANGELOG
-3. **Deploy** - Deploy to all platforms simultaneously:
+3. **Deploy** - Platform jobs are retained, with macOS and Windows paused:
    - 🍎 GitHub macOS binaries + Homebrew
    - 🪟 GitHub Windows binaries + Chocolatey
    - 🐳 Docker Hub
@@ -29,7 +36,7 @@
 4. Commit changes
 5. Tag with `v` prefix: `git tag v4.0.0-beta.3`
 6. Push tag: `git push origin v4.0.0-beta.3`
-7. Everything deploys automatically!
+7. Linux and Docker deployment run automatically; macOS and Windows are paused.
 
 ### `release-fvm-mcp.yml`
 **Trigger**: Git tag push with `fvm-mcp-v*` pattern + manual dispatch  
@@ -39,7 +46,7 @@
    - Tag must match `fvm-mcp-v<semver>`
    - Tag version must match `fvm_mcp/pubspec.yaml`
    - Tag version must match `fvm_mcp/lib/src/server.dart` default server version
-2. **Build** - Compile binaries on all supported runners:
+2. **Build** - Compile Linux binaries; the other runner entries are paused:
    - 🐧 Linux (`tar.gz`)
    - 🍎 macOS (`tar.gz`)
    - 🪟 Windows (`zip`)
@@ -91,7 +98,7 @@
    - `release.yml` triggers automatically on tag push
    - cli_pkg creates GitHub release from CHANGELOG content
    - Monitor progress in [Actions](https://github.com/btwld/fvm/actions)
-   - All platforms deployed simultaneously
+   - Linux and Docker deploy; macOS and Windows deployments are paused
 
 ### 🧩 FVM MCP Release (Standalone)
 
@@ -107,7 +114,7 @@
 
 3. **Automatic MCP Deployment**
    - `release-fvm-mcp.yml` validates version alignment
-   - Builds Linux/macOS/Windows standalone binaries
+   - Builds Linux standalone binaries; macOS and Windows are paused
    - Publishes assets and checksums to the tagged GitHub release
 
 ### ⚡ Emergency Release (Alternative)
@@ -144,3 +151,4 @@ For hotfixes or platform-specific urgent updates, use individual platform workfl
 - Check platform-specific tokens (Chocolatey, Homebrew, Docker)
 - Verify runner OS matches deployment target
 - Review build logs for specific error details
+

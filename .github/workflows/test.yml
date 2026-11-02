@@ -139,6 +139,8 @@ jobs:
 
 
   test-os:
+    # Paused to limit GitHub Actions usage.
+    if: ${{ false }}
     name: Test on ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
@@ -180,7 +182,7 @@ jobs:
   integration-test:
     name: Integration Tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: [test, test-os]
+    needs: test
     timeout-minutes: 45
     # Skip heavy integration tests for the fvm-mcp PR branch (MCP-only changes).
     if: github.event_name != 'pull_request' || github.event.pull_request.head.ref != 'fvm-mcp'
@@ -188,7 +190,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - name: Checkout
@@ -219,7 +221,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - name: Checkout
@@ -242,3 +244,4 @@ jobs:
         env:
           RUN_MIGRATION_IT: "true"
         run: dart test test/integration/migration_from_v3_test.dart
+

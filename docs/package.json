@@ -2,6 +2,9 @@
   "name": "nextra-docs-template",
   "version": "0.0.1",
   "description": "Nextra docs template",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -25,10 +28,10 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.323.0",
-    "next": "^13.5.6",
+    "next": "^15.5.28",
     "nextra": "^2.13.2",
     "nextra-theme-docs": "^2.13.2",
-    "postcss": "^8.4.29",
+    "postcss": "^8.5.23",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1",
@@ -36,11 +39,12 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "resolutions": {
-    "next-mdx-remote": "^6.0.0"
+    "next-mdx-remote": "^6.0.0",
+    "postcss": "^8.5.23"
   },
   "devDependencies": {
     "@types/node": "20.11.10",
     "eslint": "^8.56.0",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.3"
   }
 }

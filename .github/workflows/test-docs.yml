@@ -1,0 +1,58 @@
+name: Test docs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/test-docs.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/test-docs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Docs build and security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: corepack enable
+      - run: corepack prepare yarn@1.22.22 --activate
+      - run: yarn install --frozen-lockfile --non-interactive
+      - run: yarn build
+      - run: yarn exec tsc --noEmit
+      - name: Audit Next.js runtime dependencies
+        run: |
+          node <<'JS'
+          const { spawnSync } = require('node:child_process');
+          const audit = spawnSync('yarn', ['audit', '--json'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+          if (audit.error || audit.signal || audit.status === null || audit.status > 31) {
+            throw new Error(audit.error?.message || audit.stderr || 'Audit did not complete');
+          }
+          const rows = audit.stdout.trim().split('\n').map(JSON.parse);
+          if (rows.some(row => row.type === 'error') || !rows.some(row => row.type === 'auditSummary')) {
+            throw new Error('Audit returned errors or no summary');
+          }
+          // Other existing dependency advisories are outside this targeted gate.
+          const findings = rows.filter(row => row.type === 'auditAdvisory').map(row => row.data.advisory);
+          const blocked = findings.filter(a => ['next', 'postcss', 'sharp'].includes(a.module_name) || a.module_name.startsWith('@next/'));
+          console.log(JSON.stringify(rows.find(row => row.type === 'auditSummary').data));
+          if (blocked.length) {
+            console.error(blocked.map(a => `${a.module_name}: ${a.title} (${a.url})`).join('\n'));
+            process.exit(1);
+          }
+          console.log('No advisories for Next.js, PostCSS, sharp, or @next packages');
+          JS

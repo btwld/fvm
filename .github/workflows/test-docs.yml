@@ -2,6 +2,13 @@ name: Test docs
 
 on:
   pull_request:
+    # Job conditions skip every job while the pull request is a draft.
+    # ready_for_review runs CI once it is marked ready.
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
     paths:
       - "docs/**"
       - ".github/workflows/test-docs.yml"
@@ -16,6 +23,7 @@ permissions:
 
 jobs:
   docs:
+    if: ${{ github.event.pull_request.draft != true }}
     name: Docs build and security
     runs-on: ubuntu-latest
     timeout-minutes: 15

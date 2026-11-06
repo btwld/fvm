@@ -45,6 +45,7 @@
 ## CI and workflow context
 - Main validation workflow: `.github/workflows/test.yml`.
 - `test.yml` ignores docs-only changes (`**/*.md`), so editing this file alone should not trigger the heavy test workflow.
+- Draft pull requests run no jobs. `test.yml`, `test-install.yml`, and `test-docs.yml` include `ready_for_review` and skip every job while `github.event.pull_request.draft` is true. Push, schedule, manual dispatch, and reusable release calls still run.
 - CI includes fallback install logic for DCM:
   - If `dcm` is unavailable, run `dart pub global activate dart_code_metrics` and add `$HOME/.pub-cache/bin` to `PATH`.
 

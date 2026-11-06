@@ -1,12 +1,13 @@
 # fvm
 
+[![Test CLI](https://img.shields.io/github/actions/workflow/status/btwld/fvm/test.yml?branch=main&label=Test%20CLI&style=for-the-badge&logo=GitHub)](https://github.com/btwld/fvm/actions/workflows/test.yml)
 ![GitHub stars](https://img.shields.io/github/stars/btwld/fvm?style=for-the-badge&logo=GitHub&logoColor=black&labelColor=white&color=dddddd)
 [![Pub Version](https://img.shields.io/pub/v/fvm?label=version&style=for-the-badge&logo=dart&logoColor=3DB0F3&labelColor=white&color=3DB0F3)](https://pub.dev/packages/fvm/changelog)
 [![Pub Likes](https://img.shields.io/pub/likes/fvm?style=for-the-badge&logo=dart&logoColor=3DB0F3&label=Pub%20Likes&labelColor=white&color=3DB0F3)](https://pub.dev/packages/fvm/score)
 [![Pub Points](https://img.shields.io/pub/points/fvm?style=for-the-badge&logo=dart&logoColor=3DB0F3&label=Points&labelColor=white&color=3DB0F3)](https://pub.dev/packages/fvm/score)
 [![All Contributors](https://img.shields.io/github/contributors/btwld/fvm?style=for-the-badge&color=018D5B&labelColor=004F32)](https://github.com/btwld/fvm/graphs/contributors)
-[![MIT License](https://img.shields.io/github/license/btwld/fvm?style=for-the-badge&color=FF2E00&labelColor=CB2500)](https://opensource.org/licenses/mit-license.php)
-![Codecov](https://img.shields.io/codecov/c/github/btwld/fvm?style=for-the-badge&color=FFD43A&labelColor=F3BE00)
+[![MIT License](https://img.shields.io/github/license/btwld/fvm?style=for-the-badge&color=FF2E00&labelColor=CB2500)](https://github.com/btwld/fvm/blob/main/LICENSE)
+[![Codecov](https://img.shields.io/codecov/c/github/btwld/fvm?style=for-the-badge&color=FFD43A&labelColor=F3BE00)](https://app.codecov.io/gh/btwld/fvm)
 [![Awesome Flutter](https://img.shields.io/badge/awesome-flutter-8A00CB?style=for-the-badge&color=8A00CB&labelColor=630092)](https://github.com/Solido/awesome-flutter)
 
 FVM manages Flutter SDK versions per project. Switch between Flutter versions instantly without reinstalling, making it easy to test new releases and maintain consistent builds across your team.

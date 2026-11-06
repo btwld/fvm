@@ -7,6 +7,16 @@ macOS and Windows tests, deployments, Homebrew updates, and ARM64 smoke jobs
 are paused. FVM MCP releases build Linux archives only. Restore the platform
 jobs before promising new macOS or Windows release assets.
 
+## Draft pull requests
+
+`test.yml`, `test-install.yml`, and `test-docs.yml` are the workflows with a
+`pull_request` trigger. Each listens for `opened`, `synchronize`, `reopened`,
+and `ready_for_review`. Every job in those workflows is skipped while
+`github.event.pull_request.draft` is true, including scope selection and
+validation. Push, schedule, manual dispatch, and reusable release calls are
+unchanged. Marking the pull request ready for review runs CI. A draft run
+skips jobs; it does not fail a gate job.
+
 ## Flutter release feeds
 
 `data.yaml` refreshes the macOS, Windows, and Linux JSON release feeds hourly
@@ -73,12 +83,12 @@ longer required.
 7. `release-fvm-mcp.yml` publishes release assets automatically
 
 ### `test.yml`
-**Trigger**: Push, PR, workflow_call  
+**Trigger**: Push, non-draft pull request, workflow_call, manual dispatch  
 **Purpose**: Run all tests and quality checks  
 **Used by**: Other workflows for validation before deployment
 
 ### `test-install.yml` 
-**Trigger**: Manual dispatch  
+**Trigger**: Push and non-draft pull request when install scripts change, plus manual dispatch  
 **Purpose**: Test FVM installation across different platforms
 
 ## Standalone Deploy Workflows
@@ -165,9 +175,10 @@ For hotfixes or platform-specific urgent updates, use individual platform workfl
 
 ### Integration scope
 
-`Test CLI` keeps root, MCP and release-tool unit tests on every triggered run.
-Only PRs changing exclusively `fvm_mcp/`, `tool/release_tool/` and optional
-root Markdown skip the SDK-download integration and v3 migration jobs. This
+`Test CLI` keeps root, MCP and release-tool unit tests on every non-draft run.
+Draft pull requests skip every job. Only non-draft PRs changing exclusively
+`fvm_mcp/`, `tool/release_tool/` and optional root Markdown skip the
+SDK-download integration and v3 migration jobs. This
 uses the verified PR merge diff rather than a branch-name exception. Any CLI,
 dependency, shared fixture, tooling, workflow or unknown path runs both heavy
 suites. Main/develop pushes, manual and reusable workflow calls always run

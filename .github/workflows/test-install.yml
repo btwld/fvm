@@ -10,6 +10,13 @@ on:
       - 'scripts/test-install.sh'
       - '.github/workflows/test-install.yml'
   pull_request:
+    # Job conditions skip every job while the pull request is a draft.
+    # ready_for_review runs CI once it is marked ready.
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
     paths:
       - 'docs/public/install.sh'
       - 'docs/public/uninstall.sh'
@@ -25,6 +32,7 @@ concurrency:
 jobs:
   # Basic validation - shellcheck
   validate:
+    if: ${{ github.event.pull_request.draft != true }}
     timeout-minutes: 10
     name: Validate Scripts
     runs-on: ubuntu-latest
@@ -50,6 +58,7 @@ jobs:
 
   # Test install.sh (v2 - user-local only)
   test-install:
+    if: ${{ github.event.pull_request.draft != true && needs.validate.result == 'success' }}
     timeout-minutes: 30
     name: Test install.sh - ${{ matrix.os }}
     needs: validate
@@ -132,6 +141,7 @@ jobs:
 
   # Test v1 to v2 migration
   test-migration:
+    if: ${{ github.event.pull_request.draft != true && needs.validate.result == 'success' }}
     timeout-minutes: 30
     name: Test v1 to v2 Migration
     needs: validate
@@ -210,6 +220,7 @@ jobs:
 
   # Test install.sh in container (root allowed with warning)
   test-container:
+    if: ${{ github.event.pull_request.draft != true && needs.validate.result == 'success' }}
     timeout-minutes: 30
     name: Test install.sh in Container
     needs: validate
@@ -240,6 +251,7 @@ jobs:
 
   # Test install.sh root permissions (warns but allows)
   test-permissions:
+    if: ${{ github.event.pull_request.draft != true && needs.validate.result == 'success' }}
     timeout-minutes: 15
     name: Test install.sh Root Warning
     needs: validate

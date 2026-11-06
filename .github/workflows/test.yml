@@ -10,6 +10,13 @@ on:
         default: "3.10.0"
 
   pull_request:
+    # Job conditions skip every job while the pull request is a draft.
+    # ready_for_review runs CI once it is marked ready.
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
     paths-ignore:
       - "docs/**"
       - "README.md"
@@ -52,6 +59,7 @@ concurrency:
 
 jobs:
   changes:
+    if: ${{ github.event.pull_request.draft != true }}
     name: Select integration scope
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -63,7 +71,9 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
       - name: Test integration scope
-        run: python3 -m unittest discover -s .github/scripts -p 'test_ci_scope.py'
+        run: |
+          python3 -m unittest discover -s .github/scripts -p 'test_ci_scope.py'
+          python3 -m unittest discover -s .github/scripts -p 'test_ci_draft.py'
       - id: scope
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -77,7 +87,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   test:
     needs: changes
-    if: ${{ !cancelled() }}
+    if: ${{ github.event.pull_request.draft != true && !cancelled() }}
     name: Test
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -169,8 +179,8 @@ jobs:
 
 
   test-os:
-    # Paused to limit GitHub Actions usage.
-    if: ${{ false }}
+    # Paused to limit GitHub Actions usage. Keep the draft guard when unpausing.
+    if: ${{ github.event.pull_request.draft != true && false }}
     name: Test on ${{ matrix.os }}
     timeout-minutes: 45
     runs-on: ${{ matrix.os }}
@@ -214,7 +224,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [test, changes]
     timeout-minutes: 45
-    if: needs.changes.outputs.integration == 'true'
+    if: ${{ github.event.pull_request.draft != true && needs.changes.outputs.integration == 'true' }}
 
     strategy:
       fail-fast: true
@@ -244,7 +254,7 @@ jobs:
 
   migration-test:
     needs: changes
-    if: needs.changes.outputs.integration == 'true'
+    if: ${{ github.event.pull_request.draft != true && needs.changes.outputs.integration == 'true' }}
     name: Migration Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60

@@ -31,6 +31,7 @@ jobs:
             uses: docker/build-push-action@v5
             with:
               file: ./.docker/Dockerfile
+              platforms: linux/amd64,linux/arm64/v8
               push: true
               tags: leoafarias/fvm:latest
     

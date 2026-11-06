@@ -123,6 +123,25 @@ class ProcessService extends ContextualService {
       });
     }
 
+    // A terminal sends Ctrl+C to the whole foreground process group, but a
+    // signal from another program, such as a test runner, IDE or CI timeout,
+    // reaches only FVM. Forward it so that Flutter can clean up its child
+    // processes instead of being orphaned when FVM exits.
+    Process? child;
+    ProcessSignal? forwardedSignal;
+    final forwardSubscriptions = [
+      if (!Platform.isWindows)
+        for (final signal in [
+          ProcessSignal.sigterm,
+          ProcessSignal.sighup,
+          if (!context.stdinHasTerminal) ProcessSignal.sigint,
+        ])
+          signal.watch().listen((received) {
+            forwardedSignal ??= received;
+            child?.kill(received);
+          }),
+    ];
+
     final Process process;
     final int processExitCode;
     try {
@@ -135,17 +154,27 @@ class ProcessService extends ContextualService {
         runInShell: runInShell,
         mode: ProcessStartMode.inheritStdio,
       );
+      child = process;
 
       if (interrupted) {
         process.kill(ProcessSignal.sigint);
       }
+      if (forwardedSignal case final signal?) {
+        process.kill(signal);
+      }
       processExitCode = await process.exitCode;
     } finally {
       await sigintSubscription?.cancel();
+      for (final subscription in forwardSubscriptions) {
+        await subscription.cancel();
+      }
     }
 
     if (interrupted) {
       throw ForceExit('', 128 + ProcessSignal.sigint.signalNumber);
+    }
+    if (forwardedSignal case final signal?) {
+      throw ForceExit('', 128 + signal.signalNumber);
     }
 
     processResult = ProcessResult(process.pid, processExitCode, null, null);

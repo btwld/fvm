@@ -69,11 +69,14 @@ class CacheService extends ContextualService {
   }
 
   /// Returns true when the cached version can be treated as a match.
-  /// Channels, git refs, and missing SDK metadata don't provide a reliable
-  /// semantic version to compare, so they are treated as matching.
+  /// Channels, git refs, custom local SDKs, and missing SDK metadata don't
+  /// provide a reliable semantic version to compare, so they are treated as
+  /// matching. A custom SDK directory name is a label, not the Flutter
+  /// version reported by the SDK.
   bool _verifyVersionMatch(CacheFlutterVersion version) {
     if (version.isChannel) return true;
     if (version.isUnknownRef) return true;
+    if (version.isCustom) return true;
     final cached = version.flutterSdkVersion;
     if (cached == null) return true;
 

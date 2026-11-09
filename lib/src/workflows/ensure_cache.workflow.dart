@@ -179,7 +179,7 @@ class EnsureCacheWorkflow extends Workflow {
           'Not checking for version mismatch as --force flag is set.',
         );
       } else if (version.isCustom) {
-        logger.warn(
+        logger.debug(
           'Not checking for version mismatch as local version is being used.',
         );
       }

@@ -110,16 +110,7 @@ You can also change the repository URL by setting the environment variable `FVM_
 # Change the env var in your shell profile
 export FVM_FLUTTER_URL="https://github.com/org/custom-flutter.git"
 ```
-### **Setting the custom repository URL per project**
 
-You can also set the custom repository URL per project by creating a `.fvmrc` file in the root of your project and adding the following:
+### Selecting a fork per project
 
-<Callout type="warning">
-Keep in mind that for each project, the releases and channels need to be different from the ones used in other projects; otherwise, there might be some conflict. A good idea would be to reserve certain versions like `master`, for example.
-</Callout>
-
-```json filename=".fvmrc"
-{
-  "flutterUrl": "https://github.com/org/custom-flutter.git"
-}
-```
+Register the repository with `fvm fork add <name> <url>` and pin the project with `fvm use <name>/stable`. The fork registration belongs to the user. Existing projects that specify `flutterUrl` in `.fvmrc` should migrate to a registered fork.

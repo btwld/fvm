@@ -56,6 +56,22 @@ void main() {
       );
     }
 
+    test('refuses linked project metadata before writing its target', () async {
+      final dir = tempDirs.create();
+      final other = tempDirs.create();
+      createPubspecYaml(dir);
+      createProjectConfig(ProjectConfig(), dir);
+      Link(p.join(dir.path, '.fvm')).createSync(other.path);
+      final project =
+          runner.context.get<ProjectService>().findAncestor(directory: dir);
+      await expectLater(
+          UpdateProjectReferencesWorkflow(runner.context)(
+              project, createCacheVersion('3.10.0'),
+              force: true),
+          throwsA(isA<AppDetailedException>()));
+      expect(other.listSync(), isEmpty);
+    }, skip: Platform.isWindows);
+
     test('should successfully update project references', () async {
       final testDir = tempDirs.create();
       // Create test project

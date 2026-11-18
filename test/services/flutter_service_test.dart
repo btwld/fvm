@@ -1110,7 +1110,8 @@ Future<void> main(List<String> args) async {
         final result = await service.setup(mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(processService.lastCommand,
+            p.absolute(mockCacheVersion.flutterExec));
         expect(processService.lastArgs, equals(['--version']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
@@ -1144,7 +1145,8 @@ Future<void> main(List<String> args) async {
         final result = await service.runFlutter(['--help'], mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(processService.lastCommand,
+            p.absolute(mockCacheVersion.flutterExec));
         expect(processService.lastArgs, equals(['--help']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
@@ -1178,7 +1180,8 @@ Future<void> main(List<String> args) async {
         final result = await service.pubGet(mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(processService.lastCommand,
+            p.absolute(mockCacheVersion.flutterExec));
         expect(processService.lastArgs, equals(['pub', 'get']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
@@ -1210,7 +1213,8 @@ Future<void> main(List<String> args) async {
         final result = await service.pubGet(mockCacheVersion, offline: true);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(processService.lastCommand,
+            p.absolute(mockCacheVersion.flutterExec));
         expect(processService.lastArgs, equals(['pub', 'get', '--offline']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);

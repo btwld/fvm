@@ -70,7 +70,7 @@ base class FvmMcpServer extends MCPServer with ToolsSupport {
       channel: channel,
       fvm: detected,
       runner: ProcessRunner(
-        exe: 'fvm',
+        exe: resolveFvmExecutable(),
         hasSkipInput: detected.supportsSkipInput,
       ),
     );
@@ -126,6 +126,7 @@ base class FvmMcpServer extends MCPServer with ToolsSupport {
             'limit': IntegerSchema(minimum: 1),
             'filter_channel': StringSchema(
               description: 'Optional channel filter: stable|beta|dev',
+              enumValues: ['stable', 'beta', 'dev'],
             ),
           },
           additionalProperties: false,

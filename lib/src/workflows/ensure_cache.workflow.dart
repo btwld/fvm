@@ -9,6 +9,7 @@ import '../services/flutter_service.dart';
 import '../services/git_service.dart';
 import '../utils/exceptions.dart';
 import '../utils/helpers.dart';
+import '../utils/which.dart';
 import 'workflow.dart';
 
 class EnsureCacheWorkflow extends Workflow {
@@ -89,6 +90,14 @@ class EnsureCacheWorkflow extends Workflow {
     return await call(version, shouldInstall: true);
   }
 
+  Future<void> _verifySdkOrigin(CacheFlutterVersion version) async {
+    if (version.isCustom) return;
+    final expected = version.fromFork
+        ? context.getForkUrl(version.fork!)
+        : context.flutterUrl;
+    await get<GitService>().verifyOrigin(version.directory, expected);
+  }
+
   void _validateContext() {
     if (!isValidGitUrl(context.flutterUrl)) {
       throw AppException(
@@ -100,7 +109,9 @@ class EnsureCacheWorkflow extends Workflow {
 
   void _validateGit() {
     try {
-      final result = Process.runSync('git', ['--version']);
+      final exe = Platform.isWindows ? which('git.exe') : 'git';
+      if (exe == null) throw const AppException('Git is not installed');
+      final result = Process.runSync(exe, ['--version']);
       if (result.exitCode != 0) {
         throw const AppException('Git is not installed');
       }
@@ -159,6 +170,7 @@ class EnsureCacheWorkflow extends Workflow {
     }
 
     if (cacheVersion != null) {
+      await _verifySdkOrigin(cacheVersion);
       final integrity = await cacheService.verifyCacheIntegrity(cacheVersion);
 
       if (integrity == CacheIntegrity.invalid) {
@@ -223,6 +235,8 @@ class EnsureCacheWorkflow extends Workflow {
     if (newCacheVersion == null) {
       throw AppException('Could not verify cache version $version');
     }
+
+    await _verifySdkOrigin(newCacheVersion);
 
     return newCacheVersion;
   }

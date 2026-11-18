@@ -5,6 +5,7 @@ import 'package:jsonc/jsonc.dart';
 import 'package:path/path.dart' as p;
 
 import '../models/project_model.dart';
+import '../utils/file_utils.dart';
 import '../utils/constants.dart';
 import '../utils/convert_posix_path.dart';
 import '../utils/helpers.dart';
@@ -141,7 +142,7 @@ class UpdateVsCodeSettingsWorkflow extends Workflow {
       return;
     }
 
-    // Validate SDK path
+    checkManagedPath(project.path, vscodeSettingsFile.path);
     _validateSdkPath(project, 'VSCode settings');
 
     // Create the settings file if it doesn't exist
@@ -203,6 +204,7 @@ class UpdateVsCodeSettingsWorkflow extends Workflow {
     }
 
     // Validate SDK path
+    checkManagedPath(project.path, workspaceFile.path);
     _validateSdkPath(project, 'workspace file');
 
     try {

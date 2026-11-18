@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../utils/exceptions.dart';
+import '../utils/which.dart';
 import 'base_service.dart';
 
 class ProcessService extends ContextualService {
@@ -89,12 +90,27 @@ class ProcessService extends ContextualService {
     Map<String, String>? environment,
     bool throwOnError = true,
     bool echoOutput = false,
-    bool runInShell = true,
+    bool runInShell = false,
   }) async {
     logger
       ..debug('')
       ..debug('Running: $command')
       ..debug('');
+    if (Platform.isWindows &&
+        !p.isAbsolute(command) &&
+        _needsGitEnvScrubbing(command)) {
+      command = which(command == 'git' ? 'git.exe' : command) ??
+          (throw ProcessException(
+              command, args, 'Executable missing from PATH'));
+    }
+    // Windows may interpret batch files through cmd even with runInShell off.
+    if (Platform.isWindows &&
+        const {'.bat', '.cmd'}.contains(p.extension(command).toLowerCase()) &&
+        [command, ...args]
+            .any((arg) => RegExp(r'[&|<>^%!"()\r\n]').hasMatch(arg))) {
+      throw const AppException(
+          'Unsupported shell character in Windows batch invocation.');
+    }
     final scrubGitEnv = _needsGitEnvScrubbing(command);
     final effectiveEnvironment =
         scrubGitEnv ? _scrubbedGitEnvironment(environment) : environment;

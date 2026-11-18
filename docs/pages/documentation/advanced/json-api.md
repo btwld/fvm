@@ -225,26 +225,12 @@ fvm api context [options]
 {
   "context": {
     "fvmVersion": "3.0.14",
-    "workingDirectory": "/path/to/project",
-    "isTest": false,
     "fvmDir": "/path/to/.fvm",
     "gitCache": true,
-    "runPubGetOnSdkChanges": true,
     "gitCachePath": "/path/to/.fvm/cache.git",
-    "flutterUrl": "https://github.com/flutter/flutter.git",
-    "lastUpdateCheck": "2024-03-13T14:46:08.735250Z",
-    "updateCheckDisabled": false,
     "privilegedAccess": false,
     "globalCacheLink": "/path/to/.fvm/default",
-    "globalCacheBinPath": "/path/to/.fvm/default/bin",
-    "versionsCachePath": "/path/to/.fvm/versions",
-    "configPath": "/Users/username/Library/Application Support/fvm/.fvmrc",
-    "isCI": false,
-    "id": "MAIN",
-    "args": [
-      "api",
-      "info"
-    ]
+    "versionsCachePath": "/path/to/.fvm/versions"
   }
 }
 ```

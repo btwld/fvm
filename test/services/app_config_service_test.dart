@@ -26,6 +26,26 @@ void main() {
     });
 
     group('createAppConfig', () {
+      test('project preferences cannot select shared storage or SDK sources',
+          () {
+        final config = AppConfigService.createAppConfig(
+          globalConfig: LocalAppConfig()..cachePath = '/user/cache',
+          envConfig: null,
+          overrides: null,
+          projectConfig: const ProjectConfig(
+              cachePath: 'project-cache',
+              gitCachePath: 'mirror',
+              flutterUrl: 'project-remote',
+              privilegedAccess: true,
+              updateGitIgnore: false),
+        );
+        expect(config.cachePath, '/user/cache');
+        expect(config.gitCachePath, isNull);
+        expect(config.flutterUrl, isNull);
+        expect(config.privilegedAccess, isNull);
+        expect(config.updateGitIgnore, isFalse);
+      });
+
       test('handles null configs gracefully', () {
         // Test with all null configs except global (which is required)
         final globalConfig = LocalAppConfig();

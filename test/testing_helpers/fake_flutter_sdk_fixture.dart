@@ -109,6 +109,18 @@ class FakeFlutterSdkFixture {
     versionDir.createSync(recursive: true);
     Directory(p.join(versionDir.path, '.git')).createSync();
 
+    final origin = version.fromFork
+        ? context.config.forks
+            .where((fork) => fork.name == version.fork)
+            .firstOrNull
+            ?.url
+        : context.flutterUrl;
+    if (origin != null) {
+      File(p.join(versionDir.path, '.git', 'config')).writeAsStringSync(
+        '[remote "origin"]\n\turl = $origin\n',
+      );
+    }
+
     final legacyVersion = _legacyVersionForState(fixture, state);
 
     if (_writesLegacyVersionFile(state)) {

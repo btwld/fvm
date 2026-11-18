@@ -14,7 +14,17 @@ class ApiService extends ContextualService {
   const ApiService(super.context);
 
   /// Returns the current FVM context and configuration.
-  GetContextResponse getContext() => GetContextResponse(context: context);
+  GetContextResponse getContext() => GetContextResponse(
+        context: {
+          'fvmVersion': context.fvmVersion,
+          'fvmDir': context.fvmDir,
+          'versionsCachePath': context.versionsCachePath,
+          'gitCachePath': context.gitCachePath,
+          'globalCacheLink': context.globalCacheLink,
+          'gitCache': context.gitCache,
+          'privilegedAccess': context.privilegedAccess,
+        },
+      );
 
   /// Returns project information for the specified directory.
   /// If [projectDir] is null, searches from current directory upward.

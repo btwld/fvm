@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:fvm/fvm.dart';
+import 'package:path/path.dart' as p;
 import 'package:fvm/src/services/flutter_service.dart';
 import 'package:fvm/src/services/git_service.dart';
 import 'package:fvm/src/workflows/ensure_cache.workflow.dart';
@@ -9,6 +12,31 @@ import '../../testing_utils.dart';
 
 void main() {
   group('Git cache command hot path', () {
+    test('rejects SDKs from another origin even with force enabled', () async {
+      final context = TestFactory.fastContext();
+      final version = FlutterVersion.parse('stable');
+      final installed = FakeFlutterSdkFixture.install(context, version);
+      File(p.join(installed.directory, '.git', 'config')).writeAsStringSync(
+          '[remote "origin"]\nurl = https://example.invalid/alternate.git\n');
+      await expectLater(
+          EnsureCacheWorkflow(context)(version,
+              force: true, maintainGitCacheOnHit: false),
+          throwsA(isA<AppException>()));
+      expect(Directory(installed.directory).existsSync(), isTrue);
+    });
+
+    test('cache lookup rejects linked ancestors before repair', () {
+      final context = TestFactory.fastContext();
+      final external = createTempDir('separate-sdk-directory');
+      Directory(context.versionsCachePath).createSync(recursive: true);
+      Link(p.join(context.versionsCachePath, 'fork')).createSync(external.path);
+      expect(
+          () => context
+              .get<CacheService>()
+              .getVersionCacheDir(FlutterVersion.parse('fork/stable')),
+          throwsA(isA<AppException>()));
+    }, skip: Platform.isWindows);
+
     test('installed SDK skips shared git cache maintenance', () async {
       final context = TestFactory.fastContext();
       final version = FlutterVersion.parse('3.10.0');

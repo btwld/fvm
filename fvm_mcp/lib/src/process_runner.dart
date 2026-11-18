@@ -9,7 +9,6 @@ class ProcessRunner {
   final String exe;
   final bool hasSkipInput;
   final ProcessStartMode startMode;
-  final bool runInShell;
   final ProcessManager processManager;
 
   void Function(ProgressNotification notification)? _notify;
@@ -18,10 +17,8 @@ class ProcessRunner {
     required this.exe,
     required this.hasSkipInput,
     ProcessStartMode? startMode,
-    bool? runInShell,
     ProcessManager? processManager,
   }) : startMode = startMode ?? ProcessStartMode.normal,
-       runInShell = runInShell ?? Platform.isWindows,
        processManager = processManager ?? const LocalProcessManager();
 
   String _formatCommand(List<String> args) {
@@ -56,7 +53,6 @@ class ProcessRunner {
     final proc = await processManager.start(
       [exe, ...args],
       workingDirectory: cwd,
-      runInShell: runInShell,
       mode: startMode,
     );
 
@@ -121,11 +117,13 @@ class ProcessRunner {
       );
     }
 
+    final isContext =
+        args.length >= 2 && args[0] == 'api' && args[1] == 'context';
     if (timedOut) {
       final message = StringBuffer()
         ..writeln('Timeout after ${timeout.inMinutes}m')
         ..writeln('Command: ${_formatCommand(args)}');
-      if (stderrText.isNotEmpty) {
+      if (!isContext && stderrText.isNotEmpty) {
         message.writeln(stderrText);
       }
 
@@ -134,6 +132,8 @@ class ProcessRunner {
         content: [TextContent(text: message.toString().trimRight())],
       );
     }
+
+    if (isContext) return _publicContext(code, stdoutText, args);
 
     if (code != 0) {
       final message = StringBuffer()
@@ -154,6 +154,48 @@ class ProcessRunner {
     final text = stdoutText.isEmpty ? stderrText : stdoutText;
 
     return CallToolResult(content: [TextContent(text: text)]);
+  }
+
+  // Older FVM CLIs serialize the entire runtime context. Discard unknown
+  // fields and raw diagnostics before returning any content to an MCP client.
+  CallToolResult _publicContext(
+    int code,
+    String stdoutText,
+    List<String> args,
+  ) {
+    try {
+      final decoded = jsonDecode(stdoutText);
+      final context = decoded is Map ? decoded['context'] : null;
+      if (code == 0 && context is Map) {
+        final visible = {
+          for (final key in const [
+            'fvmVersion',
+            'fvmDir',
+            'versionsCachePath',
+            'gitCachePath',
+            'globalCacheLink',
+            'gitCache',
+            'privilegedAccess',
+          ])
+            if (context[key] is String || context[key] is bool)
+              key: context[key],
+        };
+        final encoder = args.contains('--compress')
+            ? const JsonEncoder()
+            : const JsonEncoder.withIndent('  ');
+        return CallToolResult(
+          content: [
+            TextContent(text: encoder.convert({'context': visible})),
+          ],
+        );
+      }
+    } on FormatException {
+      // Never include raw stdout or stderr for this command.
+    }
+    return CallToolResult(
+      isError: true,
+      content: [TextContent(text: 'Unable to read FVM context.')],
+    );
   }
 
   void bindNotifier(void Function(ProgressNotification notification) notify) {

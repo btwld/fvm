@@ -93,9 +93,21 @@ FvmVersion parseFvmVersionOutput(String output) {
   return const FvmVersion.unknown();
 }
 
+String resolveFvmExecutable() {
+  if (!Platform.isWindows) return 'fvm';
+  for (final directory in (Platform.environment['PATH'] ?? '').split(';')) {
+    if (!File(directory).isAbsolute) continue;
+    final exe = File('$directory/fvm.exe');
+    if (exe.existsSync()) return exe.path;
+  }
+  throw StateError(
+    'Install the native fvm.exe on PATH for the Windows MCP server.',
+  );
+}
+
 Future<FvmVersion> detectFvmVersion() async {
   try {
-    final res = await Process.run('fvm', ['--version'], runInShell: true);
+    final res = await Process.run(resolveFvmExecutable(), ['--version']);
     if (res.exitCode != 0) {
       return const FvmVersion.unknown();
     }

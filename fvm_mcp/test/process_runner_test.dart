@@ -38,7 +38,6 @@ void main() {
     exe: fakeFvmExe,
     hasSkipInput: hasSkipInput,
     startMode: ProcessStartMode.normal,
-    runInShell: false,
   );
 
   String textFrom(CallToolResult result) {
@@ -48,6 +47,15 @@ void main() {
 
   setUpAll(() async {
     fakeFvmExe = await _compileFakeFvm();
+  });
+
+  test('context from an older CLI exposes public fields only', () async {
+    final result = await runner(
+      hasSkipInput: false,
+    ).runJsonApi(['api', 'context']);
+    expect(jsonDecode(textFrom(result)), {
+      'context': {'fvmVersion': '3.1.2'},
+    });
   });
 
   test('run returns stdout text', () async {

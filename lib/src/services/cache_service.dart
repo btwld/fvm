@@ -53,11 +53,16 @@ class CacheService extends ContextualService {
     final cacheRoot = path.normalize(context.versionsCachePath);
     final targetPath = path.normalize(path.joinAll([cacheRoot, ...segments]));
 
-    if (!path.isWithin(cacheRoot, targetPath) && targetPath != cacheRoot) {
+    if (segments.any((segment) =>
+        path.isAbsolute(segment) ||
+        path.split(segment).any((part) => part == '..' || part == '.'))) {
       throw AppException(
         'Invalid cache path computed outside of the cache directory.',
       );
     }
+
+    checkManagedPath(context.fvmDir, cacheRoot);
+    checkManagedPath(cacheRoot, targetPath);
 
     return Directory(targetPath);
   }
@@ -110,6 +115,7 @@ class CacheService extends ContextualService {
   /// Lists all installed Flutter SDK versions, sorted newest first.
   Future<List<CacheFlutterVersion>> getAllVersions() async {
     final versionsDir = Directory(context.versionsCachePath);
+    checkManagedPath(context.fvmDir, versionsDir.path);
     if (!await versionsDir.exists()) return [];
 
     final cacheVersions = <CacheFlutterVersion>[];
@@ -137,9 +143,9 @@ class CacheService extends ContextualService {
       // Non-SDK top-level directories may be fork directories
       if (forkName != null) return;
 
-      final entries = await dir.list().toList();
+      final entries = await dir.list(followLinks: false).toList();
       for (var entry in entries) {
-        if (entry.path.isDir()) {
+        if (entry is Directory) {
           final subDirName = path.basename(entry.path);
           if (subDirName.startsWith('.')) continue;
           await processDirectory(
@@ -150,9 +156,9 @@ class CacheService extends ContextualService {
       }
     }
 
-    final topLevelEntries = await versionsDir.list().toList();
+    final topLevelEntries = await versionsDir.list(followLinks: false).toList();
     for (var entry in topLevelEntries) {
-      if (entry.path.isDir()) {
+      if (entry is Directory) {
         final dirName = path.basename(entry.path);
         if (dirName.startsWith('.')) continue;
         await processDirectory(Directory(entry.path));
@@ -323,7 +329,7 @@ class CacheService extends ContextualService {
     final newDir = getVersionCacheDir(targetVersion);
 
     if (newDir.existsSync()) {
-      newDir.deleteSync(recursive: true);
+      throw AppException('Cannot move SDK: ${newDir.path} already exists.');
     }
 
     // renameSync requires the parent directory to exist

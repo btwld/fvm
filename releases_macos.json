@@ -1,11 +1,21 @@
 {
   "base_url": "https://storage.googleapis.com/flutter_infra_release/releases",
   "current_release": {
-    "beta": "d040ef5c5c4c8be0948207fadd35e87305920146",
+    "beta": "8f89a71e053b014bf8b7c19d19a4de35ea10ddbd",
     "dev": "13a2fb10b838971ce211230f8ffdd094c14af02c",
     "stable": "ab2912035e160d9cad6306df307576da6128ebdb"
   },
   "releases": [
+    {
+      "hash": "8f89a71e053b014bf8b7c19d19a4de35ea10ddbd",
+      "channel": "beta",
+      "version": "3.51.0-0.2.pre",
+      "dart_sdk_version": "3.15.0 (build 3.15.0-118.1.beta)",
+      "dart_sdk_arch": "arm64",
+      "release_date": "2026-11-19T23:18:36.758046Z",
+      "archive": "beta/macos/flutter_macos_arm64_3.51.0-0.2.pre-beta.zip",
+      "sha256": "3111b22f4be5c0c9a517500f930d322c18ba14c90fde57cf22c7ffb26e02c3ff"
+    },
     {
       "hash": "d040ef5c5c4c8be0948207fadd35e87305920146",
       "channel": "beta",
@@ -1671,20 +1681,20 @@
       "channel": "stable",
       "version": "3.35.6",
       "dart_sdk_version": "3.9.2",
-      "dart_sdk_arch": "x64",
+      "dart_sdk_arch": "arm64",
       "release_date": "2025-10-09T17:15:26.779478Z",
-      "archive": "stable/macos/flutter_macos_3.35.6-stable.zip",
-      "sha256": "41ada443b8c6153fe14751cbbe876ab08bd1b074635294c19d674b2a7e517783"
+      "archive": "stable/macos/flutter_macos_arm64_3.35.6-stable.zip",
+      "sha256": "40c5d04016e451809bf5723526d7e288738fc47ec873614607557f5fa51f2dd2"
     },
     {
       "hash": "9f455d2486bcb28cad87b062475f42edc959f636",
       "channel": "stable",
       "version": "3.35.6",
       "dart_sdk_version": "3.9.2",
-      "dart_sdk_arch": "arm64",
+      "dart_sdk_arch": "x64",
       "release_date": "2025-10-09T17:15:26.779478Z",
-      "archive": "stable/macos/flutter_macos_arm64_3.35.6-stable.zip",
-      "sha256": "40c5d04016e451809bf5723526d7e288738fc47ec873614607557f5fa51f2dd2"
+      "archive": "stable/macos/flutter_macos_3.35.6-stable.zip",
+      "sha256": "41ada443b8c6153fe14751cbbe876ab08bd1b074635294c19d674b2a7e517783"
     },
     {
       "hash": "ac4e799d237041cf905519190471f657b657155a",

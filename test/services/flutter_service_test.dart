@@ -10,6 +10,7 @@ import 'package:fvm/src/services/flutter_service.dart';
 import 'package:fvm/src/services/git_service.dart';
 import 'package:fvm/src/services/logger_service.dart';
 import 'package:fvm/src/services/process_service.dart';
+import 'package:fvm/src/utils/constants.dart';
 import 'package:fvm/src/utils/context.dart';
 import 'package:fvm/src/utils/exceptions.dart';
 import 'package:fvm/src/workflows/ensure_cache.workflow.dart';
@@ -171,6 +172,7 @@ class _FakeProcessService extends ProcessService {
   Map<String, String>? lastEnvironment;
   bool? lastThrowOnError;
   bool? lastEchoOutput;
+  bool? lastRunInShell;
 
   @override
   Future<ProcessResult> run(
@@ -188,6 +190,7 @@ class _FakeProcessService extends ProcessService {
     lastEnvironment = environment;
     lastThrowOnError = throwOnError;
     lastEchoOutput = echoOutput;
+    lastRunInShell = runInShell;
 
     if (exception != null) {
       throw exception!;
@@ -1110,11 +1113,15 @@ Future<void> main(List<String> args) async {
         final result = await service.setup(mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(
+          processService.lastCommand,
+          equals(p.absolute(mockCacheVersion.flutterExec)),
+        );
         expect(processService.lastArgs, equals(['--version']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
         expect(processService.lastEchoOutput, isTrue);
+        expect(processService.lastRunInShell, isFalse);
         final pathValue = processService.lastEnvironment?['PATH'];
         expect(pathValue, isNotNull);
         expect(pathValue, contains(mockCacheVersion.binPath));
@@ -1144,11 +1151,15 @@ Future<void> main(List<String> args) async {
         final result = await service.runFlutter(['--help'], mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(
+          processService.lastCommand,
+          equals(p.absolute(mockCacheVersion.flutterExec)),
+        );
         expect(processService.lastArgs, equals(['--help']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
         expect(processService.lastEchoOutput, isTrue);
+        expect(processService.lastRunInShell, isFalse);
         final pathValue = processService.lastEnvironment?['PATH'];
         expect(pathValue, isNotNull);
         expect(pathValue, contains(mockCacheVersion.binPath));
@@ -1178,11 +1189,15 @@ Future<void> main(List<String> args) async {
         final result = await service.pubGet(mockCacheVersion);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(
+          processService.lastCommand,
+          equals(p.absolute(mockCacheVersion.flutterExec)),
+        );
         expect(processService.lastArgs, equals(['pub', 'get']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
         expect(processService.lastEchoOutput, isTrue);
+        expect(processService.lastRunInShell, isFalse);
         final pathValue = processService.lastEnvironment?['PATH'];
         expect(pathValue, isNotNull);
         expect(pathValue, contains(mockCacheVersion.binPath));
@@ -1210,11 +1225,15 @@ Future<void> main(List<String> args) async {
         final result = await service.pubGet(mockCacheVersion, offline: true);
 
         expect(result.exitCode, equals(0));
-        expect(processService.lastCommand, equals('flutter'));
+        expect(
+          processService.lastCommand,
+          equals(p.absolute(mockCacheVersion.flutterExec)),
+        );
         expect(processService.lastArgs, equals(['pub', 'get', '--offline']));
         expect(processService.lastWorkingDirectory, isNull);
         expect(processService.lastThrowOnError, isFalse);
         expect(processService.lastEchoOutput, isFalse);
+        expect(processService.lastRunInShell, isFalse);
         final pathValue = processService.lastEnvironment?['PATH'];
         expect(pathValue, isNotNull);
         expect(pathValue, contains(mockCacheVersion.binPath));
@@ -1223,8 +1242,26 @@ Future<void> main(List<String> args) async {
     });
 
     group('VersionRunner', () {
-      test('correctly sets up environment variables', () {
-        final context = TestFactory.context();
+      test('ignores project collisions for Flutter and Dart commands', () async {
+        final projectDirectory = createTempDir('sdk_command_collision');
+        final collisions = {
+          'flutter': File(
+            p.join(projectDirectory.path, flutterExecFileName),
+          )..writeAsStringSync('project flutter collision'),
+          'dart': File(
+            p.join(projectDirectory.path, dartExecFileName),
+          )..writeAsStringSync('project dart collision'),
+        };
+        late _FakeProcessService processService;
+        final context = TestFactory.context(
+          workingDirectoryOverride: projectDirectory.path,
+          generators: {
+            ProcessService: (ctx) {
+              processService = _FakeProcessService(ctx);
+              return processService;
+            },
+          },
+        );
 
         final flutterVersion = FlutterVersion.parse('stable');
         final mockCacheVersion = CacheFlutterVersion.fromVersion(
@@ -1237,7 +1274,55 @@ Future<void> main(List<String> args) async {
           version: mockCacheVersion,
         );
 
-        expect(versionRunner, isA<VersionRunner>());
+        final expectedExecutables = {
+          'flutter': mockCacheVersion.flutterExec,
+          'dart': mockCacheVersion.dartExec,
+        };
+
+        for (final command in expectedExecutables.keys) {
+          await versionRunner.run(command, ['--version']);
+
+          expect(
+            processService.lastCommand,
+            equals(p.absolute(expectedExecutables[command]!)),
+          );
+          expect(
+            processService.lastCommand,
+            isNot(equals(collisions[command]!.absolute.path)),
+          );
+          expect(processService.lastArgs, equals(['--version']));
+          expect(processService.lastRunInShell, isFalse);
+        }
+      });
+
+      test('preserves shell lookup for custom exec commands', () async {
+        late _FakeProcessService processService;
+        final context = TestFactory.context(
+          generators: {
+            ProcessService: (ctx) {
+              processService = _FakeProcessService(ctx);
+              return processService;
+            },
+          },
+        );
+        final mockCacheVersion = CacheFlutterVersion.fromVersion(
+          FlutterVersion.parse('stable'),
+          directory: p.join(context.versionsCachePath, 'stable'),
+        );
+        final versionRunner = VersionRunner(
+          context: context,
+          version: mockCacheVersion,
+        );
+
+        await versionRunner.run('melos', ['bootstrap']);
+
+        expect(processService.lastCommand, equals('melos'));
+        expect(processService.lastArgs, equals(['bootstrap']));
+        expect(processService.lastRunInShell, isTrue);
+        expect(
+          processService.lastEnvironment?['PATH'],
+          contains(mockCacheVersion.binPath),
+        );
       });
     });
   });

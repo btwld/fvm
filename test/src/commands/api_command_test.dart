@@ -50,7 +50,7 @@ void main() {
     late GetContextResponse response;
 
     setUp(() {
-      response = GetContextResponse(context: context);
+      response = ApiService(context).getContext();
 
       when(() => apiService.getContext()).thenAnswer((_) => response);
     });

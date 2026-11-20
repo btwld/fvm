@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../models/project_model.dart';
+import '../utils/file_utils.dart';
 import '../utils/constants.dart';
 import 'workflow.dart';
 
@@ -43,6 +44,8 @@ class SetupGitIgnoreWorkflow extends Workflow {
     }
 
     final ignoreFile = project.gitIgnoreFile;
+
+    checkManagedPath(project.path, ignoreFile.path);
 
     // Create the .gitignore file if it doesn't exist
     if (!ignoreFile.existsSync()) {

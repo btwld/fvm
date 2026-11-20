@@ -6,6 +6,7 @@ import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../models/project_model.dart';
+import '../utils/file_utils.dart';
 import '../utils/constants.dart';
 import '../utils/convert_posix_path.dart';
 import 'workflow.dart';
@@ -179,6 +180,7 @@ class UpdateMelosSettingsWorkflow extends Workflow {
     }
 
     // Update melos.yaml
+    checkManagedPath(melosFile.parent.path, melosFile.path);
     _updateMelosFile(project, melosFile);
   }
 }

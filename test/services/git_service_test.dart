@@ -413,7 +413,7 @@ void main() {
         final gitService = GitService(context);
         await expectLater(
           gitService.updateLocalMirror(),
-          throwsA(isA<ProcessException>()),
+          throwsA(isA<AppException>()),
         );
 
         expect(Directory(gitCachePath).existsSync(), isTrue);
@@ -704,6 +704,11 @@ void main() {
       expect(cacheDir.existsSync(), isTrue);
 
       final gitService = GitService(context);
+      await expectLater(
+          gitService.removeLocalMirror(), throwsA(isA<AppException>()));
+      expect(File(p.join(cacheDir.path, 'marker')).readAsStringSync(), 'cache');
+      File(p.join(cacheDir.path, 'marker')).deleteSync();
+      await gitService.updateLocalMirror();
       final deleted = await gitService.removeLocalMirror();
 
       expect(deleted, isTrue);
@@ -948,16 +953,18 @@ Future<void> main(List<String> args) async {
         );
         final gitService = GitService(context);
 
-        await gitService.ensureBareCacheIfPresent();
+        await expectLater(gitService.ensureBareCacheIfPresent(),
+            throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
         // Invalid caches are skipped here, not migrated in place.
         expect(File(p.join(gitCacheDir.path, 'junk.txt')).existsSync(), isTrue);
 
-        await gitService.updateLocalMirror();
+        await expectLater(
+            gitService.updateLocalMirror(), throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
-        await _expectHeadsTagsOnlyCache(gitCacheDir.path);
+        expect(gitCacheDir.existsSync(), isTrue);
       },
     );
 
@@ -986,14 +993,16 @@ Future<void> main(List<String> args) async {
         );
         final gitService = GitService(context);
 
-        await gitService.ensureBareCacheIfPresent();
+        await expectLater(gitService.ensureBareCacheIfPresent(),
+            throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
 
-        await gitService.updateLocalMirror();
+        await expectLater(
+            gitService.updateLocalMirror(), throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
-        await _expectHeadsTagsOnlyCache(gitCacheDir.path);
+        expect(gitCacheDir.existsSync(), isTrue);
       },
     );
 
@@ -1025,14 +1034,16 @@ Future<void> main(List<String> args) async {
         );
         final gitService = GitService(context);
 
-        await gitService.ensureBareCacheIfPresent();
+        await expectLater(gitService.ensureBareCacheIfPresent(),
+            throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
 
-        await gitService.updateLocalMirror();
+        await expectLater(
+            gitService.updateLocalMirror(), throwsA(isA<AppException>()));
 
         await _expectVictimRepositoryIntact(victimDir);
-        await _expectHeadsTagsOnlyCache(gitCacheDir.path);
+        expect(gitCacheDir.existsSync(), isTrue);
       },
     );
   });

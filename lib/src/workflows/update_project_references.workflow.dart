@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/cache_flutter_version_model.dart';
 import '../models/project_model.dart';
+import '../utils/file_utils.dart';
 import '../services/project_service.dart';
 import '../utils/exceptions.dart';
 import '../utils/extensions.dart';
@@ -34,6 +35,7 @@ class UpdateProjectReferencesWorkflow extends Workflow {
   /// directory of the currently pinned Flutter SDK version. It also cleans up legacy links
   /// that are no longer needed.
   void _updateLocalSdkReference(Project project, CacheFlutterVersion version) {
+    checkManagedPath(project.path, project.localFvmPath);
     _withFsError('Failed to create local FVM path', () {
       // Only create the directory if it doesn't exist
       if (!project.localFvmPath.dir.existsSync()) {
@@ -44,6 +46,8 @@ class UpdateProjectReferencesWorkflow extends Workflow {
     final sdkVersionFile = p.join(project.localFvmPath, versionFile);
     final sdkReleaseFile = p.join(project.localFvmPath, releaseFile);
 
+    checkManagedPath(project.path, sdkVersionFile);
+    checkManagedPath(project.path, sdkReleaseFile);
     _withFsError('Failed to write to version file', () {
       final flutterSdkVersion = version.flutterSdkVersion?.trim();
       final versionFileContents =
@@ -65,9 +69,10 @@ class UpdateProjectReferencesWorkflow extends Workflow {
     }
 
     _withFsError('Failed to prepare versions cache directory', () {
-      project.localVersionsCachePath.dir
-        ..deleteIfExists()
-        ..createSync(recursive: true);
+      checkManagedPath(project.path, project.localVersionsCachePath);
+      checkManagedPath(
+          project.path, p.dirname(project.localVersionSymlinkPath));
+      project.localVersionsCachePath.dir.createSync(recursive: true);
 
       if (version.fromFork) {
         final forkDir = p.join(project.localVersionsCachePath, version.fork!);

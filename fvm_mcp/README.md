@@ -1,11 +1,11 @@
 # fvm_mcp
 
-MCP server that mirrors the FVM CLI as tools (stdio transport). Read-only JSON endpoints are passed through verbatim; writes are non-interactive on FVM ≥ 3.2.
+MCP server that mirrors the FVM CLI as tools (stdio transport). The context endpoint returns public FVM settings and cache paths; writes are non-interactive on FVM ≥ 3.2.
 Current release status: **alpha** (`0.0.1-alpha.1`).
 
 ## Prerequisites
 
-- `fvm` must be installed and available on `PATH`.
+- Install FVM on `PATH`. On Windows, the MCP server requires a native `fvm.exe` in an absolute `PATH` directory.
 - For source execution: Dart SDK `>=3.9.0 <4.0.0`.
 
 ## Run From Source

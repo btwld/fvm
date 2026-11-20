@@ -627,7 +627,13 @@ class VersionRunner {
     ]);
 
     return _context.get<ProcessService>().run(
-          cmd,
+          switch (cmd) {
+            'flutter' => path.absolute(_version.flutterExec),
+            'dart' when Platform.isWindows && _version.hasOldBinPath =>
+              path.absolute(_version.dartBinPath, 'dart.exe'),
+            'dart' => path.absolute(_version.dartExec),
+            _ => cmd,
+          },
           args: args,
           environment: environment,
           throwOnError: throwOnError ?? false,

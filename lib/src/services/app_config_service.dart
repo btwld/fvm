@@ -63,14 +63,11 @@ class AppConfigService {
         );
       }
 
-      if (config is FileConfig) {
+      // A checkout controls project preferences, but only the operator can
+      // choose executable sources, shared storage, and privilege settings.
+      if (config is ProjectConfig) {
         appConfig = appConfig.copyWith.$merge(
           AppConfig(
-            cachePath: config.cachePath,
-            useGitCache: config.useGitCache,
-            gitCachePath: config.gitCachePath,
-            flutterUrl: config.flutterUrl,
-            privilegedAccess: config.privilegedAccess,
             runPubGetOnSdkChanges: config.runPubGetOnSdkChanges,
             updateVscodeSettings: config.updateVscodeSettings,
             updateGitIgnore: config.updateGitIgnore,

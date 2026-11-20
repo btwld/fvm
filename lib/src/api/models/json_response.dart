@@ -4,7 +4,6 @@ import '../../models/cache_flutter_version_model.dart';
 import '../../models/cleanup_model.dart';
 import '../../models/project_model.dart';
 import '../../services/releases_service/models/version_model.dart';
-import '../../utils/context.dart';
 import '../../utils/helpers.dart';
 import '../../utils/pretty_json.dart';
 
@@ -95,7 +94,7 @@ class GetProjectResponse extends APIResponse with GetProjectResponseMappable {
 
 @MappableClass()
 class GetContextResponse extends APIResponse with GetContextResponseMappable {
-  final FvmContext context;
+  final Map<String, Object?> context;
   static final fromMap = GetContextResponseMapper.fromMap;
   static final fromJson = GetContextResponseMapper.fromJson;
 

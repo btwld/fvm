@@ -32,16 +32,13 @@ This contains the version linked to the project. This file is automatically crea
 ```
 
 -  `flutter`: The version of the Flutter SDK to be used, falling back to the flutter value if not explicitly set.
--  `cachePath`: Defines the path to the project's cache directory.
--  `useGitCache`: (default: true) Indicates whether the Git cache is used for dependencies.
--  `gitCachePath`: Sets the path to the Git cache directory, applicable if useGitCache is true.
--  `flutterUrl`: Specifies the URL to the Flutter SDK repository.
--  `privilegedAccess`: (default: true) Determines if configurations requiring elevated permissions are enabled.
 -  `flavors`: A map defining custom project flavors for different configurations.
 -  `updateVscodeSettings`: (default: true) Flags whether to auto-update VS Code settings on configuration changes.
 -  `updateGitIgnore`: (default: true) Indicates whether to auto-update the .gitignore file based on project configurations.
 -  `updateMelosSettings`: (default: true) Indicates whether to auto-update Melos configuration files.
 -  `runPubGetOnSdkChanges`: (default: true) Triggers flutter pub get automatically upon Flutter SDK version changes.
+
+Configure SDK sources, cache paths, Git cache use, and privileged access in user configuration or supported environment variables. FVM ignores these settings in project files.
 
 ### .fvm Directory
 

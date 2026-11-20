@@ -59,6 +59,7 @@ class GitService extends ContextualService {
   /// Serializes git cache reads and writes through a single file lock.
   Future<T> _withGitCacheLock<T>(Future<T> Function() action) async {
     final lockFile = File('${context.gitCachePath}.lock');
+    checkManagedPath(lockFile.parent.path, lockFile.path);
     if (!lockFile.parent.existsSync()) {
       lockFile.parent.createSync(recursive: true);
     }
@@ -71,7 +72,7 @@ class GitService extends ContextualService {
 
     try {
       try {
-        lockHandle = await lockFile.open(mode: FileMode.write);
+        lockHandle = await lockFile.open(mode: FileMode.append);
 
         final lockWaitStart = DateTime.now();
         var waitingLogged = false;
@@ -119,6 +120,17 @@ class GitService extends ContextualService {
         );
       }
 
+      final entity = _entityAt(context.gitCachePath);
+      if (entity != null) {
+        if (entity is! Directory) {
+          throw AppException(
+              'Expected a Git cache directory at ${entity.path}');
+        }
+        if (!await entity.list(followLinks: false).isEmpty) {
+          await verifyOrigin(entity.path, context.flutterUrl,
+              bare: !Directory(path.join(entity.path, '.git')).existsSync());
+        }
+      }
       return await action();
     } finally {
       if (lockHandle != null) {
@@ -1129,6 +1141,41 @@ class GitService extends ContextualService {
     }
 
     return GitDir.fromExisting(versionDir.path);
+  }
+
+  /// Check the entry's own config without inheriting an enclosing repository
+  /// or resolving Git URL rewrite rules.
+  Future<void> verifyOrigin(String directory, String expected,
+      {bool bare = false}) async {
+    final config = bare
+        ? path.join(directory, 'config')
+        : path.join(directory, '.git', 'config');
+    checkManagedPath(directory, config);
+    final result = await get<ProcessService>().run(
+      'git',
+      args: [
+        'config',
+        '--no-includes',
+        '--file',
+        config,
+        '--get-all',
+        'remote.origin.url'
+      ],
+      throwOnError: false,
+    );
+    String identity(String remote) {
+      final uri = Uri.tryParse(remote);
+      if (uri != null && uri.isScheme('file') && uri.host.isEmpty) {
+        return path.normalize(uri.toFilePath());
+      }
+      return remote;
+    }
+
+    if (result.exitCode != 0 ||
+        identity(result.stdout.toString().trim()) != identity(expected)) {
+      throw AppException('Cannot verify the Git origin of $directory. '
+          'Move the existing cache aside and reinstall from the configured remote.');
+    }
   }
 
   Future<void> setOriginUrl({

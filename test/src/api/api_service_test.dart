@@ -33,6 +33,10 @@ void main() {
 
       // Verify
       expect(result, isA<GetContextResponse>());
+      expect(result.context, containsPair('fvmVersion', context.fvmVersion));
+      expect(result.context, isNot(contains('environment')));
+      expect(result.context, isNot(contains('args')));
+      expect(result.context, isNot(contains('config')));
     });
   });
 

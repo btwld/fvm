@@ -16,6 +16,7 @@ String? which(String command, {bool binDir = false}) {
       pathExtEnv != null ? pathExtEnv.split(';') : [''];
 
   for (String dir in paths) {
+    if (Platform.isWindows && !isAbsolute(dir)) continue;
     String fullPath = join(dir, command);
     File exec = File(fullPath);
 

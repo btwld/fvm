@@ -632,7 +632,6 @@ class GetContextResponseMapper extends ClassMapperBase<GetContextResponse> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = GetContextResponseMapper._());
       APIResponseMapper.ensureInitialized();
-      FvmContextMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -640,8 +639,8 @@ class GetContextResponseMapper extends ClassMapperBase<GetContextResponse> {
   @override
   final String id = 'GetContextResponse';
 
-  static FvmContext _$context(GetContextResponse v) => v.context;
-  static const Field<GetContextResponse, FvmContext> _f$context =
+  static Map<String, Object?> _$context(GetContextResponse v) => v.context;
+  static const Field<GetContextResponse, Map<String, Object?>> _f$context =
       Field('context', _$context);
 
   @override
@@ -708,8 +707,9 @@ extension GetContextResponseValueCopy<$R, $Out>
 
 abstract class GetContextResponseCopyWith<$R, $In extends GetContextResponse,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
-  FvmContextCopyWith<$R, FvmContext, FvmContext> get context;
-  $R call({FvmContext? context});
+  MapCopyWith<$R, String, Object?, ObjectCopyWith<$R, Object?, Object?>?>
+      get context;
+  $R call({Map<String, Object?>? context});
   GetContextResponseCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -723,10 +723,11 @@ class _GetContextResponseCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GetContextResponse> $mapper =
       GetContextResponseMapper.ensureInitialized();
   @override
-  FvmContextCopyWith<$R, FvmContext, FvmContext> get context =>
-      $value.context.copyWith.$chain((v) => call(context: v));
+  MapCopyWith<$R, String, Object?, ObjectCopyWith<$R, Object?, Object?>?>
+      get context => MapCopyWith($value.context,
+          (v, t) => ObjectCopyWith(v, $identity, t), (v) => call(context: v));
   @override
-  $R call({FvmContext? context}) =>
+  $R call({Map<String, Object?>? context}) =>
       $apply(FieldCopyWithData({if (context != null) #context: context}));
   @override
   GetContextResponse $make(CopyWithData data) =>

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../models/config_model.dart';
 import '../models/project_model.dart';
+import '../utils/file_utils.dart';
 import '../utils/extensions.dart';
 import '../utils/helpers.dart';
 import 'base_service.dart';
@@ -108,6 +109,9 @@ class ProjectService extends ContextualService {
     // Update flavors
     final projectConfig = project.configPath.file;
     final legacyConfigFile = project.legacyConfigPath.file;
+
+    checkManagedPath(project.path, projectConfig.path);
+    checkManagedPath(project.path, legacyConfigFile.path);
 
     // If config file does not exists create it
     if (!projectConfig.existsSync()) {

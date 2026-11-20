@@ -15,6 +15,17 @@ Future<void> main(List<String> args) async {
   final rest = args.skip(1).toList();
 
   switch (mode) {
+    case 'api':
+      stdout.write(
+        jsonEncode({
+          'context': {
+            'fvmVersion': '3.1.2',
+            'environment': {'SENTINEL': 'private-value'},
+            'futureField': 'private-value',
+          },
+        }),
+      );
+      exit(0);
     case 'echo':
       stdout.write(rest.join(' '));
       exit(0);

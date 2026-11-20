@@ -1,5 +1,25 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
+import 'exceptions.dart';
+
+/// Rejects links, including dangling links, from the trusted root to the leaf.
+void checkManagedPath(String root, String target) {
+  final base = p.normalize(p.absolute(root));
+  final destination = p.normalize(p.absolute(target));
+  if (!p.isWithin(base, destination)) {
+    throw AppException('Expected a path inside $base: $target');
+  }
+  var current = base;
+  for (final part in p.split(p.relative(destination, from: base))) {
+    current = p.join(current, part);
+    if (FileSystemEntity.isLinkSync(current)) {
+      throw AppException('Refusing to follow a link at $current');
+    }
+  }
+}
+
 /// Whether [error] indicates that another process currently holds a file lock.
 bool isFileLockContentionError(FileSystemException error) {
   if (Platform.isWindows) {

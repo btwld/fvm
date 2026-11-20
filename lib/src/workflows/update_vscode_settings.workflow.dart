@@ -268,21 +268,12 @@ class UpdateVsCodeSettingsWorkflow extends Workflow {
       // Continue execution but skip setting dart.flutterSdkPath
     }
 
+    // An explicit opt-out is intentional configuration, so skip silently.
     if (!updateVscodeSettings) {
       logger.debug(
-        '$kPackageName does not manage $kVsCode settings for this project.',
+        '$kPackageName does not manage $kVsCode settings for this project '
+        '("updateVscodeSettings": false in $kFvmConfigFileName).',
       );
-
-      // Check if project is using VS Code
-      if (isVsCode() ||
-          _hasVsCodeFiles(project) ||
-          _findWorkspaceFile(project) != null) {
-        logger.warn(
-          'You are using $kVsCode, but $kPackageName is '
-          'not managing $kVsCode settings for this project. '
-          'Please remove "updateVscodeSettings: false" from $kFvmConfigFileName',
-        );
-      }
 
       return null;
     }

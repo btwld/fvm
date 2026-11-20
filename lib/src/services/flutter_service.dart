@@ -621,17 +621,25 @@ class VersionRunner {
     bool? echoOutput,
     bool? throwOnError,
   }) {
+    // Bind SDK commands before crossing the process boundary. In particular,
+    // Windows searches the current directory before PATH during shell lookup.
+    final sdkExecutable = switch (cmd) {
+      'flutter' => path.absolute(_version.flutterExec),
+      'dart' => path.absolute(_version.dartExec),
+      _ => null,
+    };
     final environment = _updateEnvironmentVariables([
       _version.binPath,
       _version.dartBinPath,
     ]);
 
     return _context.get<ProcessService>().run(
-          cmd,
+          sdkExecutable ?? cmd,
           args: args,
           environment: environment,
           throwOnError: throwOnError ?? false,
           echoOutput: echoOutput ?? true,
+          runInShell: sdkExecutable == null,
         );
   }
 }

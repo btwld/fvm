@@ -45,6 +45,16 @@ void main() {
     expect('100.0.0', assignVersionWeight('dev'));
   });
 
+  test('Assigns main channel the same weight as master', () async {
+    // `main` is a valid Flutter channel (see kFlutterChannels) and is treated
+    // as a mainline channel alongside `master` (see FlutterVersion.isMain), so
+    // it must get the same comparison weight. Otherwise it falls through to
+    // Version.parse('main'), which fails and ranks `main` as invalid (0.0.0),
+    // below every real channel.
+    expect(assignVersionWeight('main'), '400.0.0');
+    expect(assignVersionWeight('main'), assignVersionWeight('master'));
+  });
+
   group('isValidGitUrl', () {
     test('accepts common git transports with .git suffix', () {
       expect(isValidGitUrl('https://github.com/flutter/flutter.git'), isTrue);

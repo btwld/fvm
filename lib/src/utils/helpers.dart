@@ -18,14 +18,15 @@ bool isFlutterChannel(String name) {
 }
 
 /// Converts Flutter versions and channels to comparable semver strings.
-/// Assigns weights: git commits (500.0.0), master (400.0.0), stable (300.0.0),
-/// beta (200.0.0), dev (100.0.0), invalid (0.0.0).
+/// Assigns weights: git commits (500.0.0), main/master (400.0.0),
+/// stable (300.0.0), beta (200.0.0), dev (100.0.0), invalid (0.0.0).
 String assignVersionWeight(String version) {
   /// Assign version number to continue to work with semver
   if (isPossibleGitCommit(version)) {
     version = '500.0.0';
   } else {
     switch (version) {
+      case 'main':
       case 'master':
         version = '400.0.0';
         break;

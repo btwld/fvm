@@ -1,3 +1,7 @@
+## Unreleased
+
+* fix: forward SIGTERM and SIGHUP, and SIGINT without a terminal, to proxied Flutter commands and wait for their cleanup before FVM exits with 128 + the signal number. A signal from a test runner, IDE or CI timeout reached only FVM, so `flutter run` and its frontend_server kept running as orphans
+
 ## 4.3.2
 
 * fix: preserve live command input/output, exit status, and Ctrl+C cleanup when falling back to the system PATH without a project or global SDK selection (#1080)

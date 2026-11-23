@@ -19,8 +19,8 @@ jobs:
   test:
     name: Test
     uses: ./.github/workflows/test.yml
-    # Forward repo secrets (e.g. DCM_CI_KEY/DCM_EMAIL) so the called workflow
-    # can run licensed tools; without this, workflow_call gets no secrets.
+    # Forward repo secrets (e.g. CODECOV_TOKEN) to the called workflow;
+    # without this, workflow_call gets no secrets.
     secrets: inherit
 
   release:

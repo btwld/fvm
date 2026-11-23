@@ -40,7 +40,6 @@ dev_dependencies:
   lints: ^2.1.1
   crypto: ^3.0.3
   http: ^1.1.0
-  dart_code_metrics_presets: ^2.9.0
   build_runner: ^2.4.8
   dart_mappable_builder: ^4.2.3
   build_verify: ^3.1.0

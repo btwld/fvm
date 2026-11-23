@@ -20,7 +20,6 @@
      - `tool/release_tool/`: `dart pub get` (requires Dart `>=3.8.0`)
 3. Before changing code, run baseline checks (if environment supports Dart):
    - `dart analyze --fatal-infos`
-   - `dcm analyze lib`
    - `dart test`
 4. After changes, re-run targeted checks first, then broader checks relevant to touched areas.
 
@@ -28,7 +27,6 @@
 - Root project:
   - `dart pub get`
   - `dart analyze --fatal-infos`
-  - `dcm analyze lib`
   - `dart test`
 - Integration suite (Flutter required):
   - `dart run grinder test-setup`
@@ -46,8 +44,6 @@
 - Main validation workflow: `.github/workflows/test.yml`.
 - `test.yml` ignores docs-only changes (`**/*.md`), so editing this file alone should not trigger the heavy test workflow.
 - Draft pull requests run no jobs. `test.yml`, `test-install.yml`, and `test-docs.yml` include `ready_for_review` and skip every job while `github.event.pull_request.draft` is true. Push, schedule, manual dispatch, and reusable release calls still run.
-- CI includes fallback install logic for DCM:
-  - If `dcm` is unavailable, run `dart pub global activate dart_code_metrics` and add `$HOME/.pub-cache/bin` to `PATH`.
 
 ## Errors encountered during onboarding and workarounds
 1. **Local command failure**: `dart: command not found`

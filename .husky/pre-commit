@@ -7,11 +7,3 @@ dart run lint_staged
 # Run analysis on the entire project (faster than per-file)
 echo "Running dart analyze..."
 dart analyze --fatal-infos
-
-# Run DCM analysis if available
-if command -v dcm >/dev/null 2>&1; then
-  echo "Running DCM analysis..."
-  dcm analyze lib
-else
-  echo "DCM not found, skipping DCM analysis"
-fi

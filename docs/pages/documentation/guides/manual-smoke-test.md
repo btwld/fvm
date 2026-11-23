@@ -22,7 +22,7 @@ Run this before handoff when changes touch:
 - non-interactive prompt handling
 - `.fvmrc`, `.gitignore`, Melos, or VS Code project updates
 
-This does not replace `dart test`, `dcm analyze lib`, or the real `fvm integration-test`. It is a fast manual confidence check between unit tests and the full destructive integration suite.
+This does not replace `dart test` or the real `fvm integration-test`. It is a fast manual confidence check between unit tests and the full destructive integration suite.
 
 ## Safety
 

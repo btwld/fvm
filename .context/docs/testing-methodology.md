@@ -184,7 +184,6 @@ Before pushing:
 
 ```bash
 dart analyze --fatal-infos
-dcm analyze lib
 dart test -x "sdk || network || git || integration || migration"
 ```
 

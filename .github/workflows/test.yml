@@ -91,9 +91,6 @@ jobs:
     name: Test
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    env:
-      DCM_CI_KEY: ${{ secrets.DCM_CI_KEY }}
-      DCM_EMAIL: ${{ secrets.DCM_EMAIL }}
     steps:
       - name: Require valid integration scope
         env:
@@ -118,20 +115,6 @@ jobs:
         with:
           fatal-infos: false
 
-      # DCM >=1.38.2 refuses to run on CI without a license (DCM_CI_KEY and
-      # DCM_EMAIL). Skip the steps when the repo has no license secrets; the
-      # husky pre-commit/pre-push hooks still run a licensed `dcm analyze lib`
-      # locally. Adding the secrets re-enables DCM here automatically.
-      - name: Install DCM
-        if: env.DCM_CI_KEY != '' && env.DCM_EMAIL != ''
-        uses: CQLabs/setup-dcm@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run DCM
-        if: env.DCM_CI_KEY != '' && env.DCM_EMAIL != ''
-        run: dcm analyze lib fvm_mcp/lib
-      
       - name: Install lcov
         run: sudo apt-get install lcov
 

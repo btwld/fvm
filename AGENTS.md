@@ -18,7 +18,6 @@ dart pub get                    # Install dependencies
 dart test                       # Unit tests
 dart run grinder integration-test  # Integration suite (needs Flutter)
 dart analyze --fatal-infos      # Analysis (must pass)
-dcm analyze lib                 # Code metrics
 dart run build_runner build --delete-conflicting-outputs  # Regenerate mappers
 ```
 
@@ -26,8 +25,7 @@ dart run build_runner build --delete-conflicting-outputs  # Regenerate mappers
 
 Pre-commit hooks run automatically. Before pushing:
 1. `dart analyze --fatal-infos` passes
-2. `dcm analyze lib` passes
-3. `dart test` passes
+2. `dart test` passes
 
 For final review on changes that affect `GitService`, `FlutterService`,
 `EnsureCacheWorkflow`, install/use/global command behavior, prompt handling, or

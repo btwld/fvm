@@ -225,14 +225,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.6"
-  dart_code_metrics_presets:
-    dependency: "direct dev"
-    description:
-      name: dart_code_metrics_presets
-      sha256: "75bd627851fd3693bd19d846896fb7d04c0045bbb50911478c52ac1ec29c1359"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.21.0"
   dart_console:
     dependency: "direct main"
     description:

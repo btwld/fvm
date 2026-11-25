@@ -3,6 +3,7 @@ import 'package:fvm/src/services/logger_service.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
+import '../../testing_helpers/fake_prompt_terminal.dart';
 import '../../testing_utils.dart';
 
 class _SelectCaptureLogger extends Logger {
@@ -166,18 +167,127 @@ void main() {
     });
   });
 
+  group('Logger prompts', () {
+    Logger promptLogger(FakePromptTerminal terminal) {
+      return Logger(
+        TestFactory.context(stdinHasTerminal: true),
+        terminal: terminal,
+        exitProcess: fakeExit,
+      );
+    }
+
+    test('confirm returns the key the user pressed', () {
+      expect(
+        promptLogger(FakePromptTerminal([Keys.char('y')]))
+            .confirm('Remove?', defaultValue: false),
+        isTrue,
+      );
+      expect(
+        promptLogger(FakePromptTerminal([Keys.char('n')]))
+            .confirm('Remove?', defaultValue: true),
+        isFalse,
+      );
+    });
+
+    test('confirm returns the default on Enter', () {
+      expect(
+        promptLogger(FakePromptTerminal([Keys.enter]))
+            .confirm('Remove?', defaultValue: true),
+        isTrue,
+      );
+    });
+
+    test('confirm answers no on Esc, even when the default is yes', () {
+      final logger = promptLogger(FakePromptTerminal([Keys.escape]));
+
+      expect(logger.confirm('Remove all?', defaultValue: true), isFalse);
+    });
+
+    test('confirm exits with 130 on Ctrl+C', () {
+      final terminal = FakePromptTerminal([Keys.ctrlC]);
+      final logger = promptLogger(terminal);
+
+      expect(
+        () => logger.confirm('Remove?', defaultValue: true),
+        throwsA(isA<FakeExit>().having((e) => e.code, 'code', 130)),
+      );
+      expect(terminal.output, endsWith('\x1b[?25h'));
+    });
+
+    test('select returns the option the user picked', () {
+      final logger = promptLogger(FakePromptTerminal([Keys.down, Keys.enter]));
+
+      expect(logger.select('Pick', options: ['a', 'b', 'c']), 'b');
+    });
+
+    test('select starts on the default selection', () {
+      final logger = promptLogger(FakePromptTerminal([Keys.enter]));
+
+      expect(
+        logger.select('Pick', options: ['a', 'b', 'c'], defaultSelection: 2),
+        'c',
+      );
+    });
+
+    test('select returns the default selection on Esc', () {
+      final logger = promptLogger(
+        FakePromptTerminal([Keys.down, Keys.escape]),
+      );
+
+      expect(
+        logger.select('Pick', options: ['a', 'b', 'c'], defaultSelection: 2),
+        'c',
+      );
+    });
+
+    test('select exits with 64 on Esc when there is no default', () {
+      final logger = promptLogger(FakePromptTerminal([Keys.escape]));
+
+      expect(
+        () => logger.select('Pick', options: ['a', 'b']),
+        throwsA(isA<FakeExit>().having((e) => e.code, 'code', 64)),
+      );
+    });
+
+    test('select exits with 130 on Ctrl+C', () {
+      final terminal = FakePromptTerminal([Keys.ctrlC]);
+      final logger = promptLogger(terminal);
+
+      expect(
+        () => logger.select('Pick', options: ['a', 'b'], defaultSelection: 0),
+        throwsA(isA<FakeExit>().having((e) => e.code, 'code', 130)),
+      );
+      expect(terminal.output, endsWith('\x1b[?25h'));
+    });
+
+    test('skipped input never reads the terminal', () {
+      final terminal = FakePromptTerminal([]);
+      final logger = Logger(
+        TestFactory.context(skipInput: true),
+        terminal: terminal,
+        exitProcess: fakeExit,
+      );
+
+      expect(logger.confirm('Remove?', defaultValue: true), isTrue);
+      expect(
+        logger.select('Pick', options: ['a', 'b'], defaultSelection: 1),
+        'b',
+      );
+      expect(
+        () => logger.select('Pick', options: ['a', 'b']),
+        throwsA(isA<FakeExit>().having((e) => e.code, 'code', 64)),
+      );
+      expect(terminal.keysRead, 0);
+      expect(terminal.output, isEmpty);
+    });
+  });
+
   group('Interactive methods testing note', () {
     test('cacheVersionSelector interactive behavior', () {
-      // Testing methods that rely on interact (and thus stdin) is challenging in unit tests.
-      // One common approach is to refactor your Logger to inject a dependency for interactive input.
-      // For example, you could pass in functions that simulate user responses.
-      //
-      // Alternatively, for unit tests you can set skipInput: true (and/or provide default selections)
-      // so that the interactive branches (which call exit or block on input) are bypassed.
-      //
-      // Here, note that testing cacheVersionSelector without refactoring is not recommended,
-      // because if skipInput is true and no defaultSelection is provided to select(),
-      // the method calls exit() causing the test process to terminate.
+      // The interactive prompts are covered in the 'Logger prompts' group,
+      // which passes a FakePromptTerminal and a fake exit to Logger. Without
+      // them, select() with skipInput true and no defaultSelection would call
+      // the real exit() and end the test process.
       expect(
         () => logger.cacheVersionSelector([]),
         throwsA(isA<AppException>()),

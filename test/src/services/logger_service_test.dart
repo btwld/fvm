@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:fvm/fvm.dart';
 import 'package:fvm/src/services/logger_service.dart';
+import 'package:mason_logger/mason_logger.dart' as mason;
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -21,6 +24,73 @@ class _SelectCaptureLogger extends Logger {
     final index = selectionIndex < options.length ? selectionIndex : 0;
     return options[index];
   }
+}
+
+/// `mason_logger` logger that records prompts and returns scripted answers.
+class _FakeMasonLogger extends mason.Logger {
+  final bool confirmAnswer;
+  final int choiceIndex;
+
+  String? confirmMessage;
+  bool? confirmDefault;
+  String? chooseMessage;
+  List<Object?>? choices;
+  Object? chooseDefault;
+  var prompts = 0;
+
+  _FakeMasonLogger({this.confirmAnswer = false, this.choiceIndex = 0});
+
+  @override
+  bool confirm(String? message, {bool defaultValue = false}) {
+    prompts++;
+    confirmMessage = message;
+    confirmDefault = defaultValue;
+
+    return confirmAnswer;
+  }
+
+  @override
+  T chooseOne<T extends Object?>(
+    String? message, {
+    required List<T> choices,
+    T? defaultValue,
+    String Function(T choice)? display,
+  }) {
+    prompts++;
+    chooseMessage = message;
+    this.choices = choices;
+    chooseDefault = defaultValue;
+
+    return choices[choiceIndex];
+  }
+}
+
+/// Stdout that reports whether a terminal is attached and discards output.
+class _Stdout implements Stdout {
+  @override
+  final bool hasTerminal;
+
+  _Stdout({required this.hasTerminal});
+
+  @override
+  bool get supportsAnsiEscapes => false;
+
+  @override
+  void write(Object? object) {}
+
+  @override
+  void writeln([Object? object = '']) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Runs [body] with stdout reporting [hasTerminal].
+T _withStdout<T>(T Function() body, {required bool hasTerminal}) {
+  return IOOverrides.runZoned(
+    body,
+    stdout: () => _Stdout(hasTerminal: hasTerminal),
+  );
 }
 
 void main() {
@@ -166,9 +236,121 @@ void main() {
     });
   });
 
+  group('Logger prompts', () {
+    Logger promptLogger(_FakeMasonLogger mason) {
+      return Logger(
+        TestFactory.context(stdinHasTerminal: true),
+        masonLogger: mason,
+      );
+    }
+
+    test('confirm asks mason_logger and returns its answer', () {
+      for (final answer in [true, false]) {
+        final mason = _FakeMasonLogger(confirmAnswer: answer);
+        final logger = promptLogger(mason);
+
+        final result = _withStdout(
+          () => logger.confirm('Remove?', defaultValue: !answer),
+          hasTerminal: true,
+        );
+
+        expect(result, answer);
+        expect(mason.confirmMessage, 'Remove?');
+        expect(mason.confirmDefault, !answer);
+      }
+    });
+
+    test('select asks mason_logger and returns the chosen option', () {
+      final mason = _FakeMasonLogger(choiceIndex: 1);
+      final logger = promptLogger(mason);
+
+      final result = _withStdout(
+        () => logger.select('Pick', options: ['a', 'b', 'c']),
+        hasTerminal: true,
+      );
+
+      expect(result, 'b');
+      expect(mason.chooseMessage, 'Pick');
+      expect(mason.choices, ['a', 'b', 'c']);
+      expect(mason.chooseDefault, isNull);
+    });
+
+    test('select passes the default selection as the default option', () {
+      final mason = _FakeMasonLogger(choiceIndex: 2);
+      final logger = promptLogger(mason);
+
+      final result = _withStdout(
+        () => logger.select(
+          'Pick',
+          options: ['a', 'b', 'c'],
+          defaultSelection: 2,
+        ),
+        hasTerminal: true,
+      );
+
+      expect(result, 'c');
+      expect(mason.chooseDefault, 'c');
+    });
+
+    test('a null message is passed as an empty string', () {
+      final mason = _FakeMasonLogger(confirmAnswer: true);
+      final logger = promptLogger(mason);
+
+      _withStdout(
+        () {
+          logger.confirm(null, defaultValue: false);
+          logger.select(null, options: ['a']);
+        },
+        hasTerminal: true,
+      );
+
+      expect(mason.confirmMessage, '');
+      expect(mason.chooseMessage, '');
+    });
+
+    test('prompts use their defaults when stdout is not a terminal', () {
+      final mason = _FakeMasonLogger();
+      final logger = promptLogger(mason);
+
+      _withStdout(
+        () {
+          expect(logger.confirm('Remove?', defaultValue: true), isTrue);
+          expect(
+            logger.select('Pick', options: ['a', 'b'], defaultSelection: 1),
+            'b',
+          );
+        },
+        hasTerminal: false,
+      );
+
+      expect(mason.prompts, 0);
+    });
+
+    test('skipped input never asks mason_logger', () {
+      final mason = _FakeMasonLogger();
+      final logger = Logger(
+        TestFactory.context(skipInput: true),
+        masonLogger: mason,
+      );
+
+      _withStdout(
+        () {
+          expect(logger.confirm('Remove?', defaultValue: false), isFalse);
+          expect(
+            logger.select('Pick', options: ['a', 'b'], defaultSelection: 0),
+            'a',
+          );
+        },
+        hasTerminal: true,
+      );
+
+      expect(mason.prompts, 0);
+    });
+  });
+
   group('Interactive methods testing note', () {
     test('cacheVersionSelector interactive behavior', () {
-      // Testing methods that rely on interact (and thus stdin) is challenging in unit tests.
+      // Testing methods that rely on mason_logger prompts (and thus stdin) is challenging in unit tests.
       // One common approach is to refactor your Logger to inject a dependency for interactive input.
       // For example, you could pass in functions that simulate user responses.
       //

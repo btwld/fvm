@@ -14,7 +14,6 @@ dependencies:
   args: ^2.4.2
   date_format: ^2.0.7
   git: ^2.2.1
-  interact: ^2.2.0
   io: ^1.0.4
   mason_logger: ^0.2.9
   meta: ^1.10.0

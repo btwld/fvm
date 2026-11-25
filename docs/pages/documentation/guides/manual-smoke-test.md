@@ -141,6 +141,9 @@ run_fvm_interactive_with_yes() {
   SMOKE_REPO="$FVM_REPO" \
   expect <<'EOF'
 set timeout 90
+# Give the PTY a size. Dart reports no terminal on a 0x0 PTY, and FVM then
+# skips the prompt.
+set stty_init "rows 24 cols 80"
 set main [file join $env(SMOKE_REPO) bin main.dart]
 spawn env \
   -u CI \

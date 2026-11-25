@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_console/dart_console.dart';
-import 'package:interact/interact.dart' as interact;
 import 'package:mason_logger/mason_logger.dart' as mason;
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tint/tint.dart';
@@ -24,11 +23,18 @@ class Logger extends ContextualService {
   final bool _skipInput;
   final List<String> _outputs = [];
 
-  Logger(super.context)
-      : _logger = mason.Logger(level: _toMasonLevel(context.logLevel)),
+  /// [masonLogger] replaces the underlying `mason_logger` logger in tests.
+  Logger(super.context, {mason.Logger? masonLogger})
+      : _logger =
+            masonLogger ?? mason.Logger(level: _toMasonLevel(context.logLevel)),
         _skipInput = context.skipInput;
 
   bool get isVerbose => level == Level.verbose;
+
+  /// Whether prompts are skipped and resolved to their defaults.
+  ///
+  /// `mason_logger` prompts need a terminal on stdout as well as stdin.
+  bool get _skipPrompts => _skipInput || !stdout.hasTerminal;
 
   Level get level => _toLogLevel(_logger.level);
 
@@ -113,7 +119,7 @@ class Logger extends ContextualService {
   }
 
   bool confirm(String? message, {required bool defaultValue}) {
-    if (_skipInput) {
+    if (_skipPrompts) {
       info(message ?? '');
       warn('Skipping input confirmation');
       warn('Using default value of $defaultValue');
@@ -121,10 +127,7 @@ class Logger extends ContextualService {
       return defaultValue;
     }
 
-    return interact.Confirm(
-      prompt: message ?? '',
-      defaultValue: defaultValue,
-    ).interact();
+    return _logger.confirm(message ?? '', defaultValue: defaultValue);
   }
 
   String select(
@@ -132,20 +135,18 @@ class Logger extends ContextualService {
     required List<String> options,
     int? defaultSelection,
   }) {
-    if (_skipInput) {
+    if (_skipPrompts) {
       if (defaultSelection != null) {
         return options[defaultSelection];
       }
       exit(mason.ExitCode.usage.code);
     }
 
-    final selection = interact.Select(
-      prompt: message ?? '',
-      options: options,
-      initialIndex: defaultSelection ?? 0,
-    ).interact();
-
-    return options[selection];
+    return _logger.chooseOne<String>(
+      message ?? '',
+      choices: options,
+      defaultValue: defaultSelection == null ? null : options[defaultSelection],
+    );
   }
 
   void notice(String message) {

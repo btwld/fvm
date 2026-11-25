@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_console/dart_console.dart';
-import 'package:interact/interact.dart' as interact;
 import 'package:mason_logger/mason_logger.dart' as mason;
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tint/tint.dart';
@@ -9,6 +8,7 @@ import 'package:tint/tint.dart';
 import '../models/cache_flutter_version_model.dart';
 import '../models/log_level_model.dart';
 import '../utils/exceptions.dart';
+import '../utils/terminal_prompt.dart';
 import 'base_service.dart';
 
 mason.Level _toMasonLevel(Level level) {
@@ -22,11 +22,20 @@ Level _toLogLevel(mason.Level level) {
 class Logger extends ContextualService {
   final mason.Logger _logger;
   final bool _skipInput;
+  final PromptTerminal _terminal;
+  final Never Function(int code) _exit;
   final List<String> _outputs = [];
 
-  Logger(super.context)
-      : _logger = mason.Logger(level: _toMasonLevel(context.logLevel)),
-        _skipInput = context.skipInput;
+  /// [terminal] and [exitProcess] replace the real terminal and `exit` in
+  /// tests.
+  Logger(
+    super.context, {
+    PromptTerminal? terminal,
+    Never Function(int code)? exitProcess,
+  })  : _logger = mason.Logger(level: _toMasonLevel(context.logLevel)),
+        _skipInput = context.skipInput,
+        _terminal = terminal ?? ConsoleTerminal(),
+        _exit = exitProcess ?? exit;
 
   bool get isVerbose => level == Level.verbose;
 
@@ -121,10 +130,16 @@ class Logger extends ContextualService {
       return defaultValue;
     }
 
-    return interact.Confirm(
-      prompt: message ?? '',
-      defaultValue: defaultValue,
-    ).interact();
+    final answer = _prompt(
+      () => promptConfirm(
+        _terminal,
+        message ?? '',
+        defaultValue: defaultValue,
+      ),
+    );
+
+    // Esc cancels, and a cancelled confirmation is a no.
+    return answer ?? false;
   }
 
   String select(
@@ -132,20 +147,32 @@ class Logger extends ContextualService {
     required List<String> options,
     int? defaultSelection,
   }) {
-    if (_skipInput) {
-      if (defaultSelection != null) {
-        return options[defaultSelection];
-      }
-      exit(mason.ExitCode.usage.code);
+    if (!_skipInput) {
+      final selection = _prompt(
+        () => promptSelect(
+          _terminal,
+          message ?? '',
+          options: options,
+          initialIndex: defaultSelection ?? 0,
+        ),
+      );
+      if (selection != null) return options[selection];
     }
 
-    final selection = interact.Select(
-      prompt: message ?? '',
-      options: options,
-      initialIndex: defaultSelection ?? 0,
-    ).interact();
+    // Input is skipped, or the user pressed Esc.
+    if (defaultSelection != null) {
+      return options[defaultSelection];
+    }
+    _exit(mason.ExitCode.usage.code);
+  }
 
-    return options[selection];
+  /// Runs an interactive prompt and exits with status 130 on Ctrl+C.
+  T _prompt<T>(T Function() prompt) {
+    try {
+      return prompt();
+    } on PromptInterrupted {
+      _exit(128 + ProcessSignal.sigint.signalNumber);
+    }
   }
 
   void notice(String message) {

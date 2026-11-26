@@ -22,6 +22,42 @@ void main() {
   final unusedCell = matches(RegExp(r'\u2502\s*Unused\s*\u2502'));
 
   group('fvm list', () {
+    test('shows the latest release for an outdated channel SDK', () async {
+      final context = TestFactory.fastContext();
+      FakeFlutterSdkFixture.install(
+        context,
+        FlutterVersion.parse('stable'),
+        state: FakeFlutterSdkState.installedSetup,
+        fixtureName: 'stable_3_10_0',
+      );
+      final runner = TestFactory.fastCommandRunner(context: context);
+
+      expect(await runner.run(['fvm', 'list']), ExitCode.success.code);
+      expect(plainOutput(context.get<Logger>()), contains('3.10.0 → 3.10.5'));
+    });
+
+    test('omits channel updates for current, pinned, main and forked SDKs',
+        () async {
+      final context = TestFactory.fastContext();
+      const versions = ['stable', '3.10.0', 'main', 'master', 'myfork/stable'];
+      for (final name in versions) {
+        FakeFlutterSdkFixture.install(
+          context,
+          FlutterVersion.parse(name),
+          state: FakeFlutterSdkState.installedSetup,
+          fixtureName: name == 'stable' ? 'stable_3_10_5' : 'stable_3_10_0',
+        );
+      }
+      final runner = TestFactory.fastCommandRunner(context: context);
+
+      expect(await runner.run(['fvm', 'list']), ExitCode.success.code);
+      final output = plainOutput(context.get<Logger>());
+      for (final name in versions) {
+        expect(output, contains(name));
+      }
+      expect(output, isNot(contains('→')));
+    });
+
     test('marks cached versions no known project pins as unused', () async {
       final projectDir = createConfiguredProject(name: 'local');
       final context = TestFactory.fastContext(

@@ -8,7 +8,6 @@ import '../services/logger_service.dart';
 import '../services/project_registry_service.dart';
 import '../services/project_service.dart';
 import '../services/releases_service/models/flutter_releases_model.dart';
-import '../services/releases_service/models/version_model.dart';
 import '../services/releases_service/releases_client.dart';
 import '../utils/exceptions.dart';
 import '../utils/helpers.dart';
@@ -44,16 +43,10 @@ class ListCommand extends BaseFvmCommand {
 
     for (var version in cacheVersions) {
       var printVersion = version.nameWithAlias;
-      FlutterSdkRelease? latestRelease;
-
-      // Get latest channel release for channels
-      if (version.isChannel && !version.isMain) {
-        if (version.releaseChannel != null) {
-          latestRelease = releases.latestChannelRelease(
-            version.releaseChannel!.name,
-          );
-        }
-      }
+      final latestRelease =
+          version.isChannel && !version.isMain && !version.fromFork
+              ? releases.latestChannelRelease(version.name)
+              : null;
 
       // Look up release information
       final release = releases.fromVersion(version.flutterSdkVersion ?? '');
@@ -73,13 +66,10 @@ class ListCommand extends BaseFvmCommand {
         if (version.isNotSetup) {
           return flutterSdkVersion = '${yellow.wrap('Need setup*')}';
         }
-        if (latestRelease != null && version.isChannel) {
-          // If its not the latest version
-          if (latestRelease.version != version.flutterSdkVersion) {
-            return '$flutterSdkVersion ${Icons.arrowRight} ${(green.wrap(latestRelease.version))}';
-          }
-
-          return flutterSdkVersion;
+        if (latestRelease != null &&
+            flutterSdkVersion.isNotEmpty &&
+            latestRelease.version != flutterSdkVersion) {
+          return '$flutterSdkVersion ${Icons.arrowRight} ${(green.wrap(latestRelease.version))}';
         }
 
         return flutterSdkVersion;
